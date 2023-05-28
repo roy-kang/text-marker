@@ -1,0 +1,28 @@
+{
+  "name": "text-marker.js",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "files": [
+    "dist",
+    "types"
+  ],
+  "main": "./dist/tmarker.umd.cjs",
+  "module": "./dist/tmarker.js",
+  "types": "./types/index.d.ts",
+  "exports": {
+    "types": "./index.d.ts",
+    "import": "./dist/tmarker.js",
+    "require": "./dist/tmarker.umd.cjs"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "prebuild": "vue-tsc --declaration --emitDeclarationOnly --declarationDir types"
+  },
+  "devDependencies": {
+    "typescript": "^4.9.4",
+    "vite": "^4.0.4",
+    "vue-tsc": "^1.6.5"
+  }
+}
