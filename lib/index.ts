@@ -1,5 +1,5 @@
 import type WM from './type'
-import { 
+import {
   createCanvas,
   init,
   initHandler,
@@ -23,11 +23,11 @@ import {
  * @returns 
  */
 const mouseupHandler = (
-  _e: MouseEvent, 
-  data: WM.MarkData[] = [], 
-  messages: WM.Message[], 
+  _e: MouseEvent,
+  data: WM.MarkData[] = [],
+  messages: WM.Message[],
   ctx: CanvasRenderingContext2D,
-  parentEle: HTMLElement, 
+  parentEle: HTMLElement,
   options: WM.WordMarkOptions
 ) => {
   const selection = window.getSelection()
@@ -39,8 +39,8 @@ const mouseupHandler = (
     const startEle = range.startContainer as Text
     const endEle = range.endContainer as Text
 
-    const [ startBrother, startIndex ] = getParentInfo(startEle, parentEle)
-    const [ endBrother, endIndex ] = getParentInfo(endEle, parentEle)
+    const [startBrother, startIndex] = getParentInfo(startEle, parentEle)
+    const [endBrother, endIndex] = getParentInfo(endEle, parentEle)
 
     const position: WM.MarkData = {
       id: getUUID(10),
@@ -83,8 +83,9 @@ const mouseupHandler = (
 export default function wordMarker(container: HTMLElement, options: WM.WordMarkOptions) {
   const { color = 'rgba(224, 108, 117)', globalAlpha = 0.3, data = [] } = options
 
+  const lazyLoad = container.scrollHeight / 4 > window.innerHeight
   const messages: WM.Message[] = []
-  const canvas = createCanvas(container)
+  const canvas = createCanvas(container, lazyLoad)
   const ctx = canvas.getContext('2d')!
   ctx.fillStyle = color
   ctx.globalAlpha = globalAlpha
@@ -92,7 +93,7 @@ export default function wordMarker(container: HTMLElement, options: WM.WordMarkO
   let markData: WM.MarkData[] = JSON.parse(JSON.stringify(data))
 
   // 初始化还原元素绑定及tag处理
-  if (options.tag) {
+  if (options.tag || markData.length) {
     initHandler(container, markData, options)
     // 清除没有找到元素的错误标记
     markData = markData.filter(d => d.startEle && d.endEle)
@@ -108,6 +109,15 @@ export default function wordMarker(container: HTMLElement, options: WM.WordMarkO
   }
 
   container.addEventListener('mouseup', mouseupEvent)
+
+  if (lazyLoad) {
+    document.addEventListener('scroll', () => {
+      const parentRect = container.getBoundingClientRect()
+      const y = parentRect.y >= -window.innerHeight ? 0 : -window.innerHeight - parentRect.y
+      canvas.style.transform = `translateY(${y}px)`
+      refreshMark(ctx, messages, options)
+    })
+  }
 
   return {
     getMarkData(): WM.MarkData[] {
@@ -137,8 +147,8 @@ export default function wordMarker(container: HTMLElement, options: WM.WordMarkO
         return
       }
       const parentRect = container.getBoundingClientRect()
-      const vx = x - window.pageXOffset - parentRect.left
-      const vy = y - window.pageYOffset - parentRect.top
+      const vx = x - window.scrollX - parentRect.left
+      const vy = y - window.scrollY - parentRect.top
       for (const msg of messages) {
         for (const pos of msg.range) {
           if (vx >= pos.x && vx <= pos.x + pos.width && vy >= pos.y && vy <= pos.y + pos.height) {

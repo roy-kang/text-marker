@@ -61,12 +61,12 @@ export const getParentText = (ele: Text, parentEle: HTMLElement) => {
  * @param parentEle 
  * @returns 
  */
-export const createCanvas = (parentEle: HTMLElement) => {
+export const createCanvas = (parentEle: HTMLElement, lazyLoad: boolean) => {
   const div = document.createElement('div')
   div.setAttribute('style', 'position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 999999; pointer-events: none;')
   const canvas = document.createElement('canvas')
-  canvas.width = parentEle.clientWidth
-  canvas.height = parentEle.clientHeight
+  canvas.width = parentEle.scrollWidth
+  canvas.height = lazyLoad ? window.innerHeight * 3 : parentEle.scrollHeight
   div.appendChild(canvas)
   parentEle.appendChild(div)
   return canvas
@@ -80,7 +80,7 @@ export const createCanvas = (parentEle: HTMLElement) => {
 const getComposedPath = (ele: Text) => {
   const path: HTMLElement[] = []
   let e = ele.parentElement
-  while(e) {
+  while (e) {
     path.push(e)
     e = e?.parentElement || null
   }
@@ -95,7 +95,7 @@ const getComposedPath = (ele: Text) => {
  */
 const getParent = (ele: Text, path: HTMLElement[]) => {
   let e = ele.parentElement
-  while(e) {
+  while (e) {
     if (path.includes(e)) {
       return e
     }
@@ -112,7 +112,7 @@ const getParent = (ele: Text, path: HTMLElement[]) => {
  */
 const getFather = (ele: Text, grandfather: HTMLElement | null) => {
   let e = ele?.parentElement
-  while(e) {
+  while (e) {
     if (e === grandfather) {
       return e
     }
@@ -141,7 +141,7 @@ const getAllText = (ele: ChildNode | null | undefined, startEle: Text, endEle: T
     }
     if (item.nodeType === 1) {
       texts.push(...getAllText(item, startEle, endEle, ignore))
-    } else if (item.nodeType === 3 && !ignore?.(item)){
+    } else if (item.nodeType === 3 && !ignore?.(item)) {
       if (!isStart && item === startEle) {
         isStart = true
       }
@@ -177,7 +177,7 @@ const getAllEle = (startEle?: Text, endEle?: Text, ignore?: (node: ChildNode) =>
 
   const eles: Text[] = []
   let se: ChildNode | null | undefined = startFather
-  while(se !== endFather.nextSibling) {
+  while (se !== endFather.nextSibling) {
     isReturn = false
     isStart = false
     eles.push(...getAllText(se, startEle, endEle, ignore))
@@ -200,13 +200,20 @@ export const refreshMark = (
 ) => {
   const canvas = ctx.canvas
   ctx.clearRect(0, 0, canvas.width, canvas.height)
+
+  const match = /translateY\((\d+(\.\d+)?)px\)/.exec(canvas.style.transform)
+  const translateY = match ? Number(match[1]) : 0
+
   messages.forEach(item => {
     item.range.forEach(range => {
       const { x, y, width, height } = range
-      if (options.mark) {
-        options.mark(ctx, { x, y, width, height })
-      } else {
-        ctx.fillRect(x, y, width, height)
+      if (y >= translateY && y <= translateY + window.innerHeight * 3) {
+        const ay = y - translateY
+        if (options.mark) {
+          options.mark(ctx, { x, y: ay, width, height })
+        } else {
+          ctx.fillRect(x, ay, width, height)
+        }
       }
     })
   })
@@ -221,9 +228,9 @@ export const refreshMark = (
  * @param options
  */
 export const deleteMark = (
-  ctx: CanvasRenderingContext2D, 
-  data: WM.MarkData[], 
-  messages: WM.Message[], 
+  ctx: CanvasRenderingContext2D,
+  data: WM.MarkData[],
+  messages: WM.Message[],
   id: string,
   options: WM.WordMarkOptions
 ) => {
@@ -232,7 +239,6 @@ export const deleteMark = (
   const msgIndex = messages.findIndex(item => item.id === id)
   if (msgIndex > -1) {
     messages.splice(msgIndex, 1)
-    console.log(messages, 'messages')
     refreshMark(ctx, messages, options)
   }
 }
@@ -247,8 +253,8 @@ export const deleteMark = (
  */
 export const render = (
   ctx: CanvasRenderingContext2D,
-  data: WM.MarkData, 
-  messages: WM.Message[], 
+  data: WM.MarkData,
+  messages: WM.Message[],
   container: HTMLElement,
   options: WM.WordMarkOptions
 ) => {
@@ -259,7 +265,7 @@ export const render = (
     const range = document.createRange()
     range.setStart(item, index === 0 ? data.startOffset : 0)
     range.setEnd(item, index === allEle.length - 1 ? data.endOffset : item.data.length)
-    
+
     const parentRect = container.getBoundingClientRect()
     const clientRects = range.getClientRects()
 
@@ -269,11 +275,15 @@ export const render = (
       const y = rect.top - parentRect.top
       const width = rect.right - rect.left
       const height = rect.bottom - rect.top
-  
+
+      const match = /translateY\((\d+(\.\d+)?)px\)/.exec(ctx.canvas.style.transform)
+      const translateY = match ? Number(match[1]) : 0
+      const ay = y - translateY
+
       if (options.mark) {
-        options.mark(ctx, { x, y, width, height })
+        options.mark(ctx, { x, y: ay, width, height })
       } else {
-        ctx.fillRect(x, y, width, height)
+        ctx.fillRect(x, ay, width, height)
       }
       rectInfo.push({ x, y, width, height })
     }
@@ -305,9 +315,9 @@ const checkNode = (node: HTMLElement, data: WM.MarkData[]) => {
   const text = node.textContent
   for (const item of data) {
     if (
-      !item.startEle && 
-      (item.startEleId 
-        ? item.startEleId === getAttribute(node, item.startEleId) 
+      !item.startEle &&
+      (item.startEleId
+        ? item.startEleId === getAttribute(node, item.startEleId)
         : (!item.startParentText || item.startParentText === text)
       )
     ) {
@@ -328,9 +338,9 @@ const checkNode = (node: HTMLElement, data: WM.MarkData[]) => {
       }
     }
     if (
-      !item.endEle && !item.single && 
-      (item.endEleId 
-        ? item.endEleId === getAttribute(node, item.startEleId) 
+      !item.endEle && !item.single &&
+      (item.endEleId
+        ? item.endEleId === getAttribute(node, item.startEleId)
         : (!item.endParentText || item.endParentText === text)
       )
     ) {
@@ -359,7 +369,7 @@ const checkNode = (node: HTMLElement, data: WM.MarkData[]) => {
 export const initHandler = (container: HTMLElement, data: WM.MarkData[], options: WM.WordMarkOptions) => {
   const children = Array.from(container.childNodes) as HTMLElement[]
   data.length && checkNode(container, data)
-  while(children.length) {
+  while (children.length) {
     const child = children.shift()!
     child && options.tag?.(child)
 
@@ -380,9 +390,9 @@ export const initHandler = (container: HTMLElement, data: WM.MarkData[], options
  * @param options
  */
 export const init = (
-  canvas: HTMLCanvasElement, 
-  data: WM.MarkData[], 
-  messages: WM.Message[], 
+  canvas: HTMLCanvasElement,
+  data: WM.MarkData[],
+  messages: WM.Message[],
   container: HTMLElement,
   options: WM.WordMarkOptions
 ) => {
