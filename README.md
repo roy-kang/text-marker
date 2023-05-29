@@ -1,6 +1,6 @@
-# text-marker.js
+# work-marker
 
-text-marker.js is a library used to tag web page text, which can store tag information.
+word-marker is a library used to tag web page text, which can store tag information.
 
 # demo
 
