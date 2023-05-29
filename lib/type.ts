@@ -1,4 +1,4 @@
-declare module TM {
+declare module WM {
   export type MarkData = {
     // 当前数据id
     id: string
@@ -73,4 +73,4 @@ declare module TM {
   }
 }
 
-export default TM
+export default WM

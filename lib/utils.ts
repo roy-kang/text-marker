@@ -1,4 +1,4 @@
-import type TM from './type'
+import type WM from './type'
 
 /**
  * 获取随机字符串
@@ -196,10 +196,10 @@ const getAllEle = (startEle?: Text, endEle?: Text, ignore?: (node: ChildNode) =>
  */
 export const deleteMark = (
   ctx: CanvasRenderingContext2D, 
-  data: TM.MarkData[], 
-  messages: TM.Message[], 
+  data: WM.MarkData[], 
+  messages: WM.Message[], 
   id: string,
-  options: TM.WordMarkOptions
+  options: WM.WordMarkOptions
 ) => {
   const dataIndex = data.findIndex(item => item.id === id)
   data.splice(dataIndex, 1)
@@ -226,13 +226,13 @@ export const deleteMark = (
  */
 export const render = (
   ctx: CanvasRenderingContext2D,
-  data: TM.MarkData, 
-  messages: TM.Message[], 
+  data: WM.MarkData, 
+  messages: WM.Message[], 
   container: HTMLElement,
-  options: TM.WordMarkOptions
+  options: WM.WordMarkOptions
 ) => {
   const allEle = getAllEle(data.startEle, data.endEle, options.ignoreNode)
-  const rectInfo: TM.Range[] = []
+  const rectInfo: WM.Range[] = []
 
   allEle.forEach((item, index) => {
     const range = document.createRange()
@@ -280,7 +280,7 @@ export const getAttribute = (el?: HTMLElement | null, attribute?: string) => {
  * @param node 
  * @param data 
  */
-const checkNode = (node: HTMLElement, data: TM.MarkData[]) => {
+const checkNode = (node: HTMLElement, data: WM.MarkData[]) => {
   const text = node.textContent
   for (const item of data) {
     if (
@@ -335,7 +335,7 @@ const checkNode = (node: HTMLElement, data: TM.MarkData[]) => {
  * @param data 
  * @param options
  */
-export const initHandler = (container: HTMLElement, data: TM.MarkData[], options: TM.WordMarkOptions) => {
+export const initHandler = (container: HTMLElement, data: WM.MarkData[], options: WM.WordMarkOptions) => {
   const children = Array.from(container.childNodes) as HTMLElement[]
   data.length && checkNode(container, data)
   while(children.length) {
@@ -360,10 +360,10 @@ export const initHandler = (container: HTMLElement, data: TM.MarkData[], options
  */
 export const init = (
   canvas: HTMLCanvasElement, 
-  data: TM.MarkData[], 
-  messages: TM.Message[], 
+  data: WM.MarkData[], 
+  messages: WM.Message[], 
   container: HTMLElement,
-  options: TM.WordMarkOptions
+  options: WM.WordMarkOptions
 ) => {
   const ctx = canvas.getContext('2d')!
   ctx.clearRect(0, 0, canvas.width, canvas.height)

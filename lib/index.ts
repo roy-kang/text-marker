@@ -1,4 +1,4 @@
-import type TM from './type'
+import type WM from './type'
 import { 
   createCanvas,
   init,
@@ -23,11 +23,11 @@ import {
  */
 const mouseupHandler = (
   _e: MouseEvent, 
-  data: TM.MarkData[] = [], 
-  messages: TM.Message[], 
+  data: WM.MarkData[] = [], 
+  messages: WM.Message[], 
   ctx: CanvasRenderingContext2D,
   parentEle: HTMLElement, 
-  options: TM.WordMarkOptions
+  options: WM.WordMarkOptions
 ) => {
   const selection = window.getSelection()
   let isSelection = false
@@ -41,7 +41,7 @@ const mouseupHandler = (
     const [ startBrother, startIndex ] = getParentInfo(startEle, parentEle)
     const [ endBrother, endIndex ] = getParentInfo(endEle, parentEle)
 
-    const position: TM.MarkData = {
+    const position: WM.MarkData = {
       id: getUUID(10),
       startEle,
       startEleId: getAttribute(startEle.parentElement, options.attribute),
@@ -79,17 +79,17 @@ const mouseupHandler = (
   return isSelection
 }
 
-export default function wordMarker(container: HTMLElement, options: TM.WordMarkOptions) {
+export default function wordMarker(container: HTMLElement, options: WM.WordMarkOptions) {
   const { color = 'rgba(224, 108, 117)', globalAlpha = 0.3, data = [] } = options
 
-  const messages: TM.Message[] = []
+  const messages: WM.Message[] = []
   const canvas = createCanvas(container)
   const ctx = canvas.getContext('2d')!
   ctx.fillStyle = color
   ctx.globalAlpha = globalAlpha
 
-  let markData: TM.MarkData[] = JSON.parse(JSON.stringify(data))
-  
+  let markData: WM.MarkData[] = JSON.parse(JSON.stringify(data))
+
   // 初始化还原元素绑定及tag处理
   if (options.tag) {
     initHandler(container, markData, options)
@@ -109,7 +109,7 @@ export default function wordMarker(container: HTMLElement, options: TM.WordMarkO
   container.addEventListener('mouseup', mouseupEvent)
 
   return {
-    getMarkData(): TM.MarkData[] {
+    getMarkData(): WM.MarkData[] {
       return JSON.parse(JSON.stringify(markData, (_t, key) => {
         if (key?.nodeType === 3) {
           return
