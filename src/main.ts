@@ -16,7 +16,7 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
   </div>
 `
 
-textMarker({
+const tmarker = textMarker({
   container: document.querySelector<HTMLDivElement>('#app')!,
   data: [
   ],
@@ -41,8 +41,14 @@ textMarker({
         resolve(msg)
       }
     })
-  },
-  selected(data, deleteMark) {
-    confirm(`批注内容：${data.message}\n是否删除批注？`) && deleteMark()
-  },
+  }
+})
+
+document.querySelector('#app')!.addEventListener('click', (e: Event) => {
+  const { pageX, pageY } = e as PointerEvent
+
+  const marker = tmarker.checkMark(pageX, pageY)
+  if (marker) {
+    confirm(`批注内容：${marker.message}\n是否删除批注？`) && tmarker.deleteMark(marker.id)
+  }
 })

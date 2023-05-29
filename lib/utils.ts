@@ -54,10 +54,6 @@ export const getParentText = (ele: Text, parentEle: HTMLElement) => {
     return ''
   }
   return parent.parentElement?.textContent || ''
-  // if (parent?.parentElement && parent.parentElement !== parentEle) {
-  //   parent = parent.parentElement
-  // }
-  // return parent.textContent || ''
 }
 
 /**
@@ -270,6 +266,16 @@ export const render = (
 }
 
 /**
+ * 获取元素的属性值
+ * @param el 
+ * @param attribute 
+ * @returns 
+ */
+export const getAttribute = (el?: HTMLElement | null, attribute?: string) => {
+  return el?.getAttribute(attribute || 'id') || ''
+}
+
+/**
  * 对初始化的数据进行元素绑定
  * @param node 
  * @param data 
@@ -277,7 +283,13 @@ export const render = (
 const checkNode = (node: HTMLElement, data: TM.TextData[]) => {
   const text = node.textContent
   for (const item of data) {
-    if (!item.startEle && (item.startEleId ? item.startEleId === node.id : (!item.startParentText || item.startParentText === text))) {
+    if (
+      !item.startEle && 
+      (item.startEleId 
+        ? item.startEleId === getAttribute(node, item.startEleId) 
+        : (!item.startParentText || item.startParentText === text)
+      )
+    ) {
       if (node.nodeType === 1) {
         const tags = Array.from(node?.children).map(n => n.localName).join(',')
         const target = !item.startParentText ? node : (node?.children[item.startIndex] || node)
@@ -294,7 +306,13 @@ const checkNode = (node: HTMLElement, data: TM.TextData[]) => {
         }
       }
     }
-    if (!item.endEle && !item.single && (item.endEleId ? item.endEleId === node.id : (!item.endParentText || item.endParentText === text))) {
+    if (
+      !item.endEle && !item.single && 
+      (item.endEleId 
+        ? item.endEleId === getAttribute(node, item.startEleId) 
+        : (!item.endParentText || item.endParentText === text)
+      )
+    ) {
       if (node.nodeType === 1) {
         const tags = Array.from(node?.children).map(n => n.localName).join(',')
         const target = !item.endParentText ? node : (node?.children[item.endIndex] || node)

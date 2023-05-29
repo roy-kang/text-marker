@@ -7,7 +7,8 @@ import {
   render,
   getParentInfo,
   getParentText,
-  deleteMark
+  deleteMark,
+  getAttribute
 } from './utils'
 
 /**
@@ -43,14 +44,14 @@ const mouseupHandler = (
     const position: TM.TextData = {
       id: getUUID(10),
       startEle,
-      startEleId: startEle.parentElement?.id,
+      startEleId: getAttribute(startEle.parentElement, options.attribute),
       startOffset: range.startOffset,
       startText: startEle.data,
       startIndex,
       startBrother,
       startParentText: getParentText(startEle, parentEle),
       endEle,
-      endEleId: endEle.parentElement?.id,
+      endEleId: getAttribute(endEle.parentElement, options.attribute),
       endOffset: range.endOffset,
       endText: endEle.data,
       endIndex,
@@ -78,44 +79,6 @@ const mouseupHandler = (
   return isSelection
 }
 
-/**
- * 鼠标点击事件
- * @param e 
- * @param isSelection 
- * @param data 
- * @param messages 
- * @param parentEle 
- * @param ctx 
- * @param options 
- * @returns 
- */
-const clickHandler = (
-  e: MouseEvent, 
-  isSelection: boolean, 
-  data: TM.TextData[], 
-  messages: TM.Message[], 
-  parentEle: HTMLElement,
-  ctx: CanvasRenderingContext2D, 
-  options: TM.TextMarkOptions
-) => {
-  if (!isSelection && options.selected) {
-    const parentRect = parentEle.getBoundingClientRect()
-    const { pageX, pageY } = e
-    const vx = pageX - window.pageXOffset - parentRect.left
-    const vy = pageY - window.pageYOffset - parentRect.top
-    for (const msg of messages) {
-      for (const pos of msg.range) {
-        if (vx >= pos.x && vx <= pos.x + pos.width && vy >= pos.y && vy <= pos.y + pos.height) {
-          const item = data.find(d => d.id === msg.id)!
-          options.selected(item, () => deleteMark(ctx, data, messages, item.id, options))
-          return
-        }
-      }
-    }
-  }
-  isSelection = false
-}
-
 export default function textMarker(options: TM.TextMarkOptions) {
   const { container, color = 'rgba(224, 108, 117)', globalAlpha = 0.3, data = [] } = options
 
@@ -127,7 +90,7 @@ export default function textMarker(options: TM.TextMarkOptions) {
 
   const markData: TM.TextData[] = JSON.parse(JSON.stringify(data))
 
-  // 处理下划线
+  // 初始化还原元素绑定及tag处理
   initHandler(container, markData, options)
 
   if (markData.length) {
@@ -138,12 +101,8 @@ export default function textMarker(options: TM.TextMarkOptions) {
   const mouseupEvent = (e: MouseEvent) => {
     isSelection = mouseupHandler(e, markData, messages, ctx, container, options)
   }
-  const clickEvent = (e: MouseEvent) => {
-    clickHandler(e, isSelection, markData, messages, container, ctx, options)
-  }
 
   container.addEventListener('mouseup', mouseupEvent)
-  container.addEventListener('click', clickEvent)
 
   return {
     getMarkData() {
@@ -154,6 +113,37 @@ export default function textMarker(options: TM.TextMarkOptions) {
         return key
       }))
     },
+    modifyMark(id: string, msg: string) {
+      const item = markData.find(d => d.id === id)
+      if (item) {
+        item.message = msg
+      }
+      const msgItem = messages.find(d => d.id === id)
+      if (msgItem) {
+        msgItem.message = msg
+      }
+    },
+    deleteMark(id: string) {
+      deleteMark(ctx, markData, messages, id, options)
+    },
+    checkMark(x: number, y: number) {
+      if (isSelection) {
+        isSelection = false
+        return
+      }
+      const parentRect = container.getBoundingClientRect()
+      const vx = x - window.pageXOffset - parentRect.left
+      const vy = y - window.pageYOffset - parentRect.top
+      for (const msg of messages) {
+        for (const pos of msg.range) {
+          if (vx >= pos.x && vx <= pos.x + pos.width && vy >= pos.y && vy <= pos.y + pos.height) {
+            const item = markData.find(d => d.id === msg.id)!
+            return item ? { ...item } : undefined
+          }
+        }
+      }
+      return
+    },
     refresh() {
       ctx.clearRect(0, 0, canvas.width, canvas.height)
       messages.length = 0
@@ -161,7 +151,6 @@ export default function textMarker(options: TM.TextMarkOptions) {
     },
     destory() {
       container.removeEventListener('mouseup', mouseupEvent)
-      container.removeEventListener('click', clickEvent)
     }
   }
 }

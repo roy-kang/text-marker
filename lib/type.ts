@@ -23,12 +23,12 @@ declare module TM {
   export type TextMarkOptions = {
     // 目标元素
     container: HTMLElement
+    attribute?: string
     color?: string
     globalAlpha?: number
     data?: TextData[]
     tag?: (node: HTMLElement) => void
     ignoreNode?: (node: ChildNode) => boolean
-    selected?: (data: TextData, deleteMark: () => void) => void
     add?: (data: TextData) => Promise<string | undefined>
     mark?: (ctx: CanvasRenderingContext2D, range: Range) => void
     clearMark?: (range: Range) => void
