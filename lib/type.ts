@@ -55,8 +55,6 @@ declare module WM {
     add?: (data: MarkData) => Promise<string | undefined>
     // 自定义标记的样式
     mark?: (ctx: CanvasRenderingContext2D, range: Range) => void
-    // 自定义标记的清除动作
-    clearMark?: (range: Range) => void
   }
   
   export type Range = {

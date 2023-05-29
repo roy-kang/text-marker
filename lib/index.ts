@@ -8,7 +8,8 @@ import {
   getParentInfo,
   getParentText,
   deleteMark,
-  getAttribute
+  getAttribute,
+  refreshMark
 } from './utils'
 
 /**
@@ -149,9 +150,7 @@ export default function wordMarker(container: HTMLElement, options: WM.WordMarkO
       return
     },
     refresh() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height)
-      messages.length = 0
-      init(canvas, markData, messages, container, options)
+      refreshMark(ctx, messages, options)
     },
     destory() {
       container.removeEventListener('mouseup', mouseupEvent)

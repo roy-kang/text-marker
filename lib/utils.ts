@@ -187,6 +187,32 @@ const getAllEle = (startEle?: Text, endEle?: Text, ignore?: (node: ChildNode) =>
 }
 
 /**
+ * 刷新标记
+ * @param ctx 
+ * @param messages 
+ * @param container 
+ * @param options 
+ */
+export const refreshMark = (
+  ctx: CanvasRenderingContext2D,
+  messages: WM.Message[],
+  options: WM.WordMarkOptions
+) => {
+  const canvas = ctx.canvas
+  ctx.clearRect(0, 0, canvas.width, canvas.height)
+  messages.forEach(item => {
+    item.range.forEach(range => {
+      const { x, y, width, height } = range
+      if (options.mark) {
+        options.mark(ctx, { x, y, width, height })
+      } else {
+        ctx.fillRect(x, y, width, height)
+      }
+    })
+  })
+}
+
+/**
  * 删除标记
  * @param ctx 
  * @param data 
@@ -205,14 +231,9 @@ export const deleteMark = (
   data.splice(dataIndex, 1)
   const msgIndex = messages.findIndex(item => item.id === id)
   if (msgIndex > -1) {
-    const message = messages.splice(msgIndex, 1)[0]
-    message.range.forEach(item => {
-      if (options.clearMark) {
-        options.clearMark(item)
-      } else {
-        ctx.clearRect(item.x, item.y - 1, item.width, item.height + 2)
-      }
-    })
+    messages.splice(msgIndex, 1)
+    console.log(messages, 'messages')
+    refreshMark(ctx, messages, options)
   }
 }
 

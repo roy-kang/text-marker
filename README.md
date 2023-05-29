@@ -64,8 +64,6 @@ type WordMarkOptions = {
   add?: (data: MarkData) => Promise<string | undefined>;
   // 标记方式
   mark?: (ctx: CanvasRenderingContext2D, range: Range) => void;
-  // 清除标记方式
-  clearMark?: (range: Range) => void;
 };
 ```
 
