@@ -79,8 +79,8 @@ const mouseupHandler = (
   return isSelection
 }
 
-export default function textMarker(options: TM.TextMarkOptions) {
-  const { container, color = 'rgba(224, 108, 117)', globalAlpha = 0.3, data = [] } = options
+export default function textMarker(container: HTMLElement, options: TM.TextMarkOptions) {
+  const { color = 'rgba(224, 108, 117)', globalAlpha = 0.3, data = [] } = options
 
   const messages: TM.Message[] = []
   const canvas = createCanvas(container)
@@ -88,12 +88,15 @@ export default function textMarker(options: TM.TextMarkOptions) {
   ctx.fillStyle = color
   ctx.globalAlpha = globalAlpha
 
-  const markData: TM.TextData[] = JSON.parse(JSON.stringify(data))
-
-  // 初始化还原元素绑定及tag处理
-  initHandler(container, markData, options)
+  let markData: TM.TextData[] = JSON.parse(JSON.stringify(data))
 
   if (markData.length) {
+    // 初始化还原元素绑定及tag处理
+    if (options.tag) {
+      initHandler(container, markData, options)
+      // 清除没有找到元素的错误标记
+      markData = markData.filter(d => d.startEle && d.endEle)
+    }
     init(canvas, markData, messages, container, options)
   }
 
@@ -105,7 +108,7 @@ export default function textMarker(options: TM.TextMarkOptions) {
   container.addEventListener('mouseup', mouseupEvent)
 
   return {
-    getMarkData() {
+    getMarkData(): TM.TextData[] {
       return JSON.parse(JSON.stringify(markData, (_t, key) => {
         if (key?.nodeType === 3) {
           return

@@ -5,7 +5,7 @@ export default defineConfig({
     lib: {
       entry: './lib/index.ts',
       name: 'TextMarker',
-      fileName: 'tmarker'
+      fileName: 'textMarker'
     }
   }
 })

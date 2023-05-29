@@ -2,24 +2,39 @@
   "name": "text-marker.js",
   "private": true,
   "version": "0.1.0",
+  "description": "The library used to tag web page text, which can store tag information.",
   "type": "module",
   "files": [
     "dist",
     "types"
   ],
-  "main": "./dist/tmarker.umd.cjs",
-  "module": "./dist/tmarker.js",
+  "main": "./dist/textMarker.umd.cjs",
+  "module": "./dist/textMarker.js",
   "types": "./types/index.d.ts",
   "exports": {
     "types": "./index.d.ts",
-    "import": "./dist/tmarker.js",
-    "require": "./dist/tmarker.umd.cjs"
+    "import": "./dist/textMarker.js",
+    "require": "./dist/textMarker.umd.cjs"
   },
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "prebuild": "vue-tsc --declaration --emitDeclarationOnly --declarationDir types"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/roy-kang/text-marker.git"
+  },
+  "keywords": [
+    "text-marker",
+    "canvas"
+  ],
+  "author": "Roy Kang",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/roy-kang/text-marker/issues"
+  },
+  "homepage": "https://github.com/roy-kang/text-marker/blob/main/README.md",
   "devDependencies": {
     "typescript": "^4.9.4",
     "vite": "^4.0.4",
