@@ -1,5 +1,5 @@
 declare module TM {
-  export type TextData = {
+  export type MarkData = {
     // 当前数据id
     id: string
     // 开始文本元素
@@ -38,7 +38,7 @@ declare module TM {
     message: string
   }
   
-  export type TextMarkOptions = {
+  export type WordMarkOptions = {
     // 标记元素指定的唯一属性字段
     attribute?: string
     // 标记的样式
@@ -46,13 +46,13 @@ declare module TM {
     // 标记的透明度
     globalAlpha?: number
     // 标记的数据
-    data?: TextData[]
+    data?: MarkData[]
     // 初始化时处理所有元素
     tag?: (node: HTMLElement) => void
     // 是否忽略某个元素
     ignoreNode?: (node: ChildNode) => boolean
     // 标记的数据添加前的回调
-    add?: (data: TextData) => Promise<string | undefined>
+    add?: (data: MarkData) => Promise<string | undefined>
     // 自定义标记的样式
     mark?: (ctx: CanvasRenderingContext2D, range: Range) => void
     // 自定义标记的清除动作

@@ -1,25 +1,27 @@
 {
-  "name": "text-marker.js",
-  "private": true,
-  "version": "0.1.0",
+  "name": "word-marker",
+  "version": "0.1.1",
   "description": "The library used to tag web page text, which can store tag information.",
   "type": "module",
   "files": [
     "dist",
     "types"
   ],
-  "main": "./dist/textMarker.umd.cjs",
-  "module": "./dist/textMarker.js",
+  "main": "./dist/index.umd.cjs",
+  "module": "./dist/index.js",
   "types": "./types/index.d.ts",
   "exports": {
     "types": "./index.d.ts",
-    "import": "./dist/textMarker.js",
-    "require": "./dist/textMarker.umd.cjs"
+    "import": "./dist/index.js",
+    "require": "./dist/index.umd.cjs"
   },
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "prebuild": "vue-tsc --declaration --emitDeclarationOnly --declarationDir types"
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/"
   },
   "repository": {
     "type": "git",

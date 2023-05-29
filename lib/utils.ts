@@ -196,10 +196,10 @@ const getAllEle = (startEle?: Text, endEle?: Text, ignore?: (node: ChildNode) =>
  */
 export const deleteMark = (
   ctx: CanvasRenderingContext2D, 
-  data: TM.TextData[], 
+  data: TM.MarkData[], 
   messages: TM.Message[], 
   id: string,
-  options: TM.TextMarkOptions
+  options: TM.WordMarkOptions
 ) => {
   const dataIndex = data.findIndex(item => item.id === id)
   data.splice(dataIndex, 1)
@@ -226,10 +226,10 @@ export const deleteMark = (
  */
 export const render = (
   ctx: CanvasRenderingContext2D,
-  data: TM.TextData, 
+  data: TM.MarkData, 
   messages: TM.Message[], 
   container: HTMLElement,
-  options: TM.TextMarkOptions
+  options: TM.WordMarkOptions
 ) => {
   const allEle = getAllEle(data.startEle, data.endEle, options.ignoreNode)
   const rectInfo: TM.Range[] = []
@@ -280,7 +280,7 @@ export const getAttribute = (el?: HTMLElement | null, attribute?: string) => {
  * @param node 
  * @param data 
  */
-const checkNode = (node: HTMLElement, data: TM.TextData[]) => {
+const checkNode = (node: HTMLElement, data: TM.MarkData[]) => {
   const text = node.textContent
   for (const item of data) {
     if (
@@ -335,7 +335,7 @@ const checkNode = (node: HTMLElement, data: TM.TextData[]) => {
  * @param data 
  * @param options
  */
-export const initHandler = (container: HTMLElement, data: TM.TextData[], options: TM.TextMarkOptions) => {
+export const initHandler = (container: HTMLElement, data: TM.MarkData[], options: TM.WordMarkOptions) => {
   const children = Array.from(container.childNodes) as HTMLElement[]
   data.length && checkNode(container, data)
   while(children.length) {
@@ -360,10 +360,10 @@ export const initHandler = (container: HTMLElement, data: TM.TextData[], options
  */
 export const init = (
   canvas: HTMLCanvasElement, 
-  data: TM.TextData[], 
+  data: TM.MarkData[], 
   messages: TM.Message[], 
   container: HTMLElement,
-  options: TM.TextMarkOptions
+  options: TM.WordMarkOptions
 ) => {
   const ctx = canvas.getContext('2d')!
   ctx.clearRect(0, 0, canvas.width, canvas.height)

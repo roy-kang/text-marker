@@ -5,7 +5,7 @@ text-marker.js is a library used to tag web page text, which can store tag infor
 # demo
 
 ```ts
-import textMarker from "text-marker.js";
+import wordMarker from "word-marker";
 
 document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
   <div>
@@ -22,7 +22,7 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
 </div>
 `;
 
-const tmarker = textMarker(document.querySelector<HTMLDivElement>("#app")!, {
+const wMarker = wordMarker(document.querySelector<HTMLDivElement>("#app")!, {
   add() {
     return new Promise((resolve) => {
       const msg = prompt("请输入批注", "这里需要一个备注信息");
@@ -36,10 +36,10 @@ const tmarker = textMarker(document.querySelector<HTMLDivElement>("#app")!, {
 document.querySelector("#app")!.addEventListener("click", (e: Event) => {
   const { pageX, pageY } = e as PointerEvent;
 
-  const marker = tmarker.checkMark(pageX, pageY);
+  const marker = wMarker.checkMark(pageX, pageY);
   if (marker) {
     confirm(`批注内容：${marker.message}\n是否删除批注？`) &&
-      tmarker.deleteMark(marker.id);
+      wMarker.deleteMark(marker.id);
   }
 });
 ```
@@ -47,7 +47,7 @@ document.querySelector("#app")!.addEventListener("click", (e: Event) => {
 # Options
 
 ```ts
-type TextMarkOptions = {
+type WordMarkOptions = {
   // 元素上的唯一标识，默认：id
   attribute?: string;
   // 标记颜色，默认：rgba(224, 108, 117)
@@ -55,13 +55,13 @@ type TextMarkOptions = {
   // 标记透明度，默认：0.3
   globalAlpha?: number;
   // 标记数据回显
-  data?: TextData[];
+  data?: MarkData[];
   // 对于每一个元素可以进行初始化处理
   tag?: (node: HTMLElement) => void;
   // 在选中标记的时候，可以根据节点就行忽略处理
   ignoreNode?: (node: ChildNode) => boolean;
   // 添加前的钩子
-  add?: (data: TextData) => Promise<string | undefined>;
+  add?: (data: MarkData) => Promise<string | undefined>;
   // 标记方式
   mark?: (ctx: CanvasRenderingContext2D, range: Range) => void;
   // 清除标记方式
@@ -74,16 +74,16 @@ type TextMarkOptions = {
 ```ts
 function textMarker(
   container: HTMLElement,
-  options: TextMarkOptions
+  options: WordMarkOptions
 ): {
   // 获取所有的标记信息
-  getMarkData(): TextData[];
+  getMarkData(): MarkData[];
   // 修改标记信息
   modifyMark(id: string, msg: string): void;
   // 删除标记
   deleteMark(id: string): void;
   // 根据位置信息查找是否有标记信息
-  checkMark(x: number, y: number): TextData | undefined;
+  checkMark(x: number, y: number): MarkData | undefined;
   // 刷新所有标记显示
   refresh(): void;
   // 销毁所有标记

@@ -23,11 +23,11 @@ import {
  */
 const mouseupHandler = (
   _e: MouseEvent, 
-  data: TM.TextData[] = [], 
+  data: TM.MarkData[] = [], 
   messages: TM.Message[], 
   ctx: CanvasRenderingContext2D,
   parentEle: HTMLElement, 
-  options: TM.TextMarkOptions
+  options: TM.WordMarkOptions
 ) => {
   const selection = window.getSelection()
   let isSelection = false
@@ -41,7 +41,7 @@ const mouseupHandler = (
     const [ startBrother, startIndex ] = getParentInfo(startEle, parentEle)
     const [ endBrother, endIndex ] = getParentInfo(endEle, parentEle)
 
-    const position: TM.TextData = {
+    const position: TM.MarkData = {
       id: getUUID(10),
       startEle,
       startEleId: getAttribute(startEle.parentElement, options.attribute),
@@ -79,7 +79,7 @@ const mouseupHandler = (
   return isSelection
 }
 
-export default function textMarker(container: HTMLElement, options: TM.TextMarkOptions) {
+export default function wordMarker(container: HTMLElement, options: TM.WordMarkOptions) {
   const { color = 'rgba(224, 108, 117)', globalAlpha = 0.3, data = [] } = options
 
   const messages: TM.Message[] = []
@@ -88,15 +88,16 @@ export default function textMarker(container: HTMLElement, options: TM.TextMarkO
   ctx.fillStyle = color
   ctx.globalAlpha = globalAlpha
 
-  let markData: TM.TextData[] = JSON.parse(JSON.stringify(data))
+  let markData: TM.MarkData[] = JSON.parse(JSON.stringify(data))
+  
+  // 初始化还原元素绑定及tag处理
+  if (options.tag) {
+    initHandler(container, markData, options)
+    // 清除没有找到元素的错误标记
+    markData = markData.filter(d => d.startEle && d.endEle)
+  }
 
   if (markData.length) {
-    // 初始化还原元素绑定及tag处理
-    if (options.tag) {
-      initHandler(container, markData, options)
-      // 清除没有找到元素的错误标记
-      markData = markData.filter(d => d.startEle && d.endEle)
-    }
     init(canvas, markData, messages, container, options)
   }
 
@@ -108,7 +109,7 @@ export default function textMarker(container: HTMLElement, options: TM.TextMarkO
   container.addEventListener('mouseup', mouseupEvent)
 
   return {
-    getMarkData(): TM.TextData[] {
+    getMarkData(): TM.MarkData[] {
       return JSON.parse(JSON.stringify(markData, (_t, key) => {
         if (key?.nodeType === 3) {
           return
