@@ -2,6 +2,8 @@
 
 word-marker is a library used to tag web page text, which can store tag information.
 
+Support for custom tag styles, highlighting, and more
+
 # demo
 
 ```ts
@@ -31,6 +33,10 @@ const wMarker = wordMarker(document.querySelector<HTMLDivElement>("#app")!, {
       }
     });
   },
+  highlight(ctx, range) {
+    ctx.fillStyle = "rgba(224, 108, 117, 0.5)";
+    ctx.fillRect(range.x, range.y, range.width, range.height);
+  },
 });
 
 document.querySelector("#app")!.addEventListener("click", (e: Event) => {
@@ -42,28 +48,41 @@ document.querySelector("#app")!.addEventListener("click", (e: Event) => {
       wMarker.deleteMark(marker.id);
   }
 });
+
+document.querySelector("#app")!.addEventListener("mousemove", (e: Event) => {
+  const { pageX, pageY } = e as PointerEvent;
+
+  const marker = tmarker.checkMark(pageX, pageY);
+  tmarker.lighthighMark(marker?.id);
+});
 ```
 
 # Options
 
 ```ts
-type WordMarkOptions = {
-  // 元素上的唯一标识，默认：id
+type MarkOptions = {
+  // 滚动元素, 默认为 document
+  scrollBy?: HTMLElement | Document;
+  // 是否懒加载
+  lazy?: boolean;
+  // 标记元素指定的唯一属性字段
   attribute?: string;
-  // 标记颜色，默认：rgba(224, 108, 117)
+  // 标记的样式
   color?: string;
-  // 标记透明度，默认：0.3
+  // 标记的透明度
   globalAlpha?: number;
-  // 标记数据回显
+  // 标记的数据
   data?: MarkData[];
-  // 对于每一个元素可以进行初始化处理
+  // 初始化时处理所有元素
   tag?: (node: HTMLElement) => void;
-  // 在选中标记的时候，可以根据节点就行忽略处理
+  // 是否忽略某个元素
   ignoreNode?: (node: ChildNode) => boolean;
-  // 添加前的钩子
-  add?: (data: MarkData) => Promise<string | undefined>;
-  // 标记方式
+  // 标记的数据添加前的回调
+  add?: (e: Event, data: MarkData) => Promise<string | undefined>;
+  // 自定义标记的样式
   mark?: (ctx: CanvasRenderingContext2D, range: Range) => void;
+  // 高亮标记的样式
+  highlight?: (ctx: CanvasRenderingContext2D, range: Range) => void;
 };
 ```
 
@@ -72,19 +91,49 @@ type WordMarkOptions = {
 ```ts
 function textMarker(
   container: HTMLElement,
-  options: WordMarkOptions
+  options: MarkOptions
 ): {
-  // 获取所有的标记信息
+  /**
+   * 获取所有的标记数据
+   * @returns 获取标记数据
+   */
   getMarkData(): MarkData[];
-  // 修改标记信息
+  /**
+   * 修改标记备注
+   * @param id
+   * @param msg
+   */
   modifyMark(id: string, msg: string): void;
-  // 删除标记
+  /**
+   * 根据 ID 获取标记位置
+   * @param id
+   * @returns
+   */
+  getPosition(id: string): { x: number; y: number } | undefined;
+  /**
+   * 根据 ID 删除标记
+   * @param id
+   */
   deleteMark(id: string): void;
-  // 根据位置信息查找是否有标记信息
+  /**
+   * 根据 x y 获取该位置是否有标记
+   * @param x
+   * @param y
+   * @returns
+   */
   checkMark(x: number, y: number): MarkData | undefined;
-  // 刷新所有标记显示
+  /**
+   * 高亮标记
+   * @param id
+   */
+  lighthighMark(id?: string): void;
+  /**
+   * 重新刷新标记
+   */
   refresh(): void;
-  // 销毁所有标记
+  /**
+   * 销毁所有事件
+   */
   destory(): void;
 };
 ```

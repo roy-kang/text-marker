@@ -38,7 +38,13 @@ declare module WM {
     message: string
   }
   
-  export type WordMarkOptions = {
+  type RequiredBy<T, K extends keyof T> = Omit<T, K> & Required<Pick<T, K>>
+  
+  export type MarkOptions = {
+    // 滚动元素, 默认为 document
+    scrollBy?: HTMLElement | Document
+    // 是否懒加载
+    lazy?: boolean
     // 标记元素指定的唯一属性字段
     attribute?: string
     // 标记的样式
@@ -52,9 +58,11 @@ declare module WM {
     // 是否忽略某个元素
     ignoreNode?: (node: ChildNode) => boolean
     // 标记的数据添加前的回调
-    add?: (data: MarkData) => Promise<string | undefined>
+    add?: (e: Event, data: MarkData) => Promise<string | undefined>
     // 自定义标记的样式
     mark?: (ctx: CanvasRenderingContext2D, range: Range) => void
+    // 高亮标记的样式
+    highlight?: (ctx: CanvasRenderingContext2D, range: Range) => void
   }
   
   export type Range = {
@@ -69,6 +77,8 @@ declare module WM {
     range: Range[]
     message: string
   }
+
+  export type WordMarkOptions = RequiredBy<MarkOptions, 'scrollBy' | 'color' | 'globalAlpha' | 'attribute'>
 }
 
 export default WM

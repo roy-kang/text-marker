@@ -21,6 +21,34 @@ export const getUUID = (num: number) => {
 }
 
 /**
+ * 节流函数
+ * @param fn 
+ * @param lazy 
+ */
+export const throttle = (fn: () => void, lazy: number = 50) => {
+  let timer: number | null = null
+  return () => {
+    if (timer) {
+      clearTimeout(timer)
+    }
+    timer = setTimeout(() => {
+      fn()
+      timer = null
+    }, lazy)
+  }
+}
+
+/**
+ * 获取canvas的Y轴偏移量
+ * @param canvas 
+ * @returns 
+ */
+export const getCanvasTranslateY = (canvas: HTMLCanvasElement) => {
+  const match = /translateY\((\d+(\.\d+)?)px\)/.exec(canvas.style.transform)
+  return match ? Number(match[1]) : 0
+}
+
+/**
  * 获取当前文本元素的祖先元素信息用于定位
  * @param ele 
  * @param parentEle 
@@ -63,7 +91,7 @@ export const getParentText = (ele: Text, parentEle: HTMLElement) => {
  */
 export const createCanvas = (parentEle: HTMLElement, lazyLoad: boolean) => {
   const div = document.createElement('div')
-  div.setAttribute('style', 'position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 999999; pointer-events: none;')
+  div.setAttribute('style', 'position: absolute; top: 0; left: 0; z-index: 999999; pointer-events: none;')
   const canvas = document.createElement('canvas')
   canvas.width = parentEle.scrollWidth
   canvas.height = lazyLoad ? window.innerHeight * 3 : parentEle.scrollHeight
@@ -160,7 +188,7 @@ const getAllText = (ele: ChildNode | null | undefined, startEle: Text, endEle: T
  * @param endEle 
  * @returns 
  */
-const getAllEle = (startEle?: Text, endEle?: Text, ignore?: (node: ChildNode) => boolean) => {
+const getAllTextNode = (startEle?: Text, endEle?: Text, ignore?: (node: ChildNode) => boolean) => {
   if (!startEle || !endEle) {
     return []
   }
@@ -199,10 +227,11 @@ export const refreshMark = (
   options: WM.WordMarkOptions
 ) => {
   const canvas = ctx.canvas
+  ctx.fillStyle = options.color
+  ctx.globalAlpha = options.globalAlpha
   ctx.clearRect(0, 0, canvas.width, canvas.height)
 
-  const match = /translateY\((\d+(\.\d+)?)px\)/.exec(canvas.style.transform)
-  const translateY = match ? Number(match[1]) : 0
+  const translateY = getCanvasTranslateY(canvas)
 
   messages.forEach(item => {
     item.range.forEach(range => {
@@ -258,13 +287,13 @@ export const render = (
   container: HTMLElement,
   options: WM.WordMarkOptions
 ) => {
-  const allEle = getAllEle(data.startEle, data.endEle, options.ignoreNode)
+  const allTextNode = getAllTextNode(data.startEle, data.endEle, options.ignoreNode)
   const rectInfo: WM.Range[] = []
 
-  allEle.forEach((item, index) => {
+  allTextNode.forEach((item, index) => {
     const range = document.createRange()
     range.setStart(item, index === 0 ? data.startOffset : 0)
-    range.setEnd(item, index === allEle.length - 1 ? data.endOffset : item.data.length)
+    range.setEnd(item, index === allTextNode.length - 1 ? data.endOffset : item.data.length)
 
     const parentRect = container.getBoundingClientRect()
     const clientRects = range.getClientRects()
@@ -276,8 +305,7 @@ export const render = (
       const width = rect.right - rect.left
       const height = rect.bottom - rect.top
 
-      const match = /translateY\((\d+(\.\d+)?)px\)/.exec(ctx.canvas.style.transform)
-      const translateY = match ? Number(match[1]) : 0
+      const translateY = getCanvasTranslateY(ctx.canvas)
       const ay = y - translateY
 
       if (options.mark) {
@@ -311,13 +339,13 @@ export const getAttribute = (el?: HTMLElement | null, attribute?: string) => {
  * @param node 
  * @param data 
  */
-const checkNode = (node: HTMLElement, data: WM.MarkData[]) => {
+const checkNode = (node: HTMLElement, data: WM.MarkData[], attribute: string) => {
   const text = node.textContent
   for (const item of data) {
     if (
       !item.startEle &&
       (item.startEleId
-        ? item.startEleId === getAttribute(node, item.startEleId)
+        ? item.startEleId === getAttribute(node, attribute)
         : (!item.startParentText || item.startParentText === text)
       )
     ) {
@@ -340,7 +368,7 @@ const checkNode = (node: HTMLElement, data: WM.MarkData[]) => {
     if (
       !item.endEle && !item.single &&
       (item.endEleId
-        ? item.endEleId === getAttribute(node, item.startEleId)
+        ? item.endEleId === getAttribute(node, attribute)
         : (!item.endParentText || item.endParentText === text)
       )
     ) {
@@ -368,13 +396,13 @@ const checkNode = (node: HTMLElement, data: WM.MarkData[]) => {
  */
 export const initHandler = (container: HTMLElement, data: WM.MarkData[], options: WM.WordMarkOptions) => {
   const children = Array.from(container.childNodes) as HTMLElement[]
-  data.length && checkNode(container, data)
+  data.length && checkNode(container, data, options.attribute)
   while (children.length) {
     const child = children.shift()!
     child && options.tag?.(child)
 
     // 处理子元素
-    data.length && checkNode(child, data)
+    data.length && checkNode(child, data, options.attribute)
     for (let i = 0; i < child?.childNodes.length; i++) {
       children.push(child?.childNodes[i] as HTMLElement)
     }

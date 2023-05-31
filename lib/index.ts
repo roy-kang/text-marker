@@ -9,7 +9,9 @@ import {
   getParentText,
   deleteMark,
   getAttribute,
-  refreshMark
+  refreshMark,
+  throttle,
+  getCanvasTranslateY
 } from './utils'
 
 /**
@@ -23,7 +25,7 @@ import {
  * @returns 
  */
 const mouseupHandler = (
-  _e: MouseEvent,
+  e: MouseEvent,
   data: WM.MarkData[] = [],
   messages: WM.Message[],
   ctx: CanvasRenderingContext2D,
@@ -66,31 +68,44 @@ const mouseupHandler = (
     data.push(position)
 
     if (options.add) {
-      options.add(position).then((msg?: string) => {
+      options.add(e, position).then((msg?: string) => {
         if (msg) {
           position.message = msg
         }
+        selection?.removeAllRanges()
         render(ctx, position, messages, parentEle, options)
       })
     } else {
+      selection?.removeAllRanges()
       render(ctx, position, messages, parentEle, options)
     }
   }
-  selection?.removeAllRanges()
   return isSelection
 }
 
-export default function wordMarker(container: HTMLElement, options: WM.WordMarkOptions) {
-  const { color = 'rgba(224, 108, 117)', globalAlpha = 0.3, data = [] } = options
+const defaultOptions = {
+  scrollBy: document,
+  color: 'rgba(224, 108, 117)',
+  globalAlpha: 0.3,
+  data: [],
+  attribute: 'id',
+}
 
-  const lazyLoad = container.scrollHeight / 4 > window.innerHeight
+export default function wordMarker(container: HTMLElement, opts: WM.MarkOptions) {
+  const options = { ...defaultOptions, ...opts }
+
+  let lazyLoad = options.lazy === undefined ? container.scrollHeight / 4 > window.innerHeight : options.lazy
+
+  if (lazyLoad && container.scrollHeight <= window.innerHeight * 3) {
+    lazyLoad = false
+  }
   const messages: WM.Message[] = []
   const canvas = createCanvas(container, lazyLoad)
   const ctx = canvas.getContext('2d')!
-  ctx.fillStyle = color
-  ctx.globalAlpha = globalAlpha
+  ctx.fillStyle = options.color
+  ctx.globalAlpha = options.globalAlpha
 
-  let markData: WM.MarkData[] = JSON.parse(JSON.stringify(data))
+  let markData: WM.MarkData[] = JSON.parse(JSON.stringify(options.data))
 
   // 初始化还原元素绑定及tag处理
   if (options.tag || markData.length) {
@@ -103,23 +118,35 @@ export default function wordMarker(container: HTMLElement, options: WM.WordMarkO
     init(canvas, markData, messages, container, options)
   }
 
+  let highlightId: string | undefined = ''
   let isSelection = false
   const mouseupEvent = (e: MouseEvent) => {
     isSelection = mouseupHandler(e, markData, messages, ctx, container, options)
   }
+  const scrollEvent = throttle(() => {
+    const parentRect = container.getBoundingClientRect()
+    let y = 0
+    if (parentRect.y >= -window.innerHeight) {
+      y = 0
+    } else if (parentRect.y <= window.innerHeight * 3 - container.scrollHeight) {
+      y = container.scrollHeight - window.innerHeight * 3
+    } else {
+      y = -window.innerHeight - parentRect.y
+    }
+    canvas.style.transform = `translateY(${y}px)`
+    refreshMark(ctx, messages, options)
+  })
 
   container.addEventListener('mouseup', mouseupEvent)
-
   if (lazyLoad) {
-    document.addEventListener('scroll', () => {
-      const parentRect = container.getBoundingClientRect()
-      const y = parentRect.y >= -window.innerHeight ? 0 : -window.innerHeight - parentRect.y
-      canvas.style.transform = `translateY(${y}px)`
-      refreshMark(ctx, messages, options)
-    })
+    options.scrollBy.addEventListener('scroll', scrollEvent)
   }
 
   return {
+    /**
+     * 获取所有的标记数据
+     * @returns 获取标记数据
+     */
     getMarkData(): WM.MarkData[] {
       return JSON.parse(JSON.stringify(markData, (_t, key) => {
         if (key?.nodeType === 3) {
@@ -128,6 +155,11 @@ export default function wordMarker(container: HTMLElement, options: WM.WordMarkO
         return key
       }))
     },
+    /**
+     * 修改标记备注
+     * @param id 
+     * @param msg 
+     */
     modifyMark(id: string, msg: string) {
       const item = markData.find(d => d.id === id)
       if (item) {
@@ -138,9 +170,36 @@ export default function wordMarker(container: HTMLElement, options: WM.WordMarkO
         msgItem.message = msg
       }
     },
+    /**
+     * 根据 ID 获取标记位置
+     * @param id 
+     * @returns 
+     */
+    getPosition(id: string) {
+      const msg = messages.find(d => d.id === id)
+      if (msg) {
+        let x = 0, y = 0
+        for (const pos of msg.range) {
+          x = Math.min(x, pos.x)
+          y = Math.min(y, pos.y)
+        }
+        return { x, y }
+      }
+      return
+    },
+    /**
+     * 根据 ID 删除标记
+     * @param id 
+     */
     deleteMark(id: string) {
       deleteMark(ctx, markData, messages, id, options)
     },
+    /**
+     * 根据 x y 获取该位置是否有标记
+     * @param x 
+     * @param y 
+     * @returns 
+     */
     checkMark(x: number, y: number) {
       if (isSelection) {
         isSelection = false
@@ -152,18 +211,53 @@ export default function wordMarker(container: HTMLElement, options: WM.WordMarkO
       for (const msg of messages) {
         for (const pos of msg.range) {
           if (vx >= pos.x && vx <= pos.x + pos.width && vy >= pos.y && vy <= pos.y + pos.height) {
-            const item = markData.find(d => d.id === msg.id)!
+            const item = markData.find(d => d.id === msg.id)
             return item ? { ...item } : undefined
           }
         }
       }
       return
     },
+    /**
+     * 高亮标记
+     * @param id 
+     */
+    lighthighMark(id?: string) {
+      if (highlightId !== id) {
+        if (id) {
+          const msg = messages.find(d => d.id === id)
+          const translateY = getCanvasTranslateY(canvas)
+          
+          if (msg) {
+            for (const pos of msg.range) {
+              const { x, y, width, height } = pos
+              let ay = y
+              if (y >= translateY && y <= translateY + window.innerHeight * 3) {
+                ay = y - translateY
+              }
+              options.highlight?.(ctx, { x, y: ay, width, height })
+            }
+          }
+        } else {
+          refreshMark(ctx, messages, options)
+        }
+        highlightId = id
+      }
+    },
+    /**
+     * 重新刷新标记
+     */
     refresh() {
       refreshMark(ctx, messages, options)
     },
+    /**
+     * 销毁所有事件
+     */
     destory() {
       container.removeEventListener('mouseup', mouseupEvent)
+      if (lazyLoad) {
+        options.scrollBy.removeEventListener('scroll', scrollEvent)
+      }
     }
   }
 }
