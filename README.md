@@ -61,10 +61,10 @@ document.querySelector("#app")!.addEventListener("mousemove", (e: Event) => {
 
 ```ts
 type MarkOptions = {
-  // 滚动元素, 默认为 document
-  scrollBy?: HTMLElement | Document;
-  // 是否懒加载
+  // 是否懒加载，默认为高度超过窗口 4 倍开启
   lazy?: boolean;
+  // 滚动元素, 如果懒加载开启则默认为 document
+  scrollBy?: HTMLElement | Document;
   // 标记元素指定的唯一属性字段
   attribute?: string;
   // 标记的样式
