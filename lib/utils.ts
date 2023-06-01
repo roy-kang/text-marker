@@ -264,7 +264,9 @@ export const deleteMark = (
   options: WM.WordMarkOptions
 ) => {
   const dataIndex = data.findIndex(item => item.id === id)
-  data.splice(dataIndex, 1)
+  if (dataIndex > -1) {
+    data.splice(dataIndex, 1)
+  }
   const msgIndex = messages.findIndex(item => item.id === id)
   if (msgIndex > -1) {
     messages.splice(msgIndex, 1)
@@ -332,6 +334,44 @@ export const render = (
  */
 export const getAttribute = (el?: HTMLElement | null, attribute?: string) => {
   return el?.getAttribute(attribute || 'id') || ''
+}
+
+/**
+ * 获取标记数据
+ * @param container 
+ * @param selection 
+ * @param options 
+ * @returns 
+ */
+export const getMarkData = (container: HTMLElement, selection: Selection, options: WM.WordMarkOptions) => {
+  const range = selection.getRangeAt(0)
+  const startEle = range.startContainer as Text
+  const endEle = range.endContainer as Text
+
+  const [startBrother, startIndex] = getParentInfo(startEle, container)
+  const [endBrother, endIndex] = getParentInfo(endEle, container)
+
+  const markData = {
+    id: getUUID(10),
+    startEle,
+    startEleId: getAttribute(startEle.parentElement, options.attribute),
+    startOffset: range.startOffset,
+    startText: startEle.data,
+    startIndex,
+    startBrother,
+    startParentText: getParentText(startEle, container),
+    endEle,
+    endEleId: getAttribute(endEle.parentElement, options.attribute),
+    endOffset: range.endOffset,
+    endText: endEle.data,
+    endIndex,
+    endBrother,
+    endParentText: getParentText(endEle, container),
+    text: selection.toString(),
+    message: '',
+    single: startEle === endEle
+  }
+  return markData
 }
 
 /**

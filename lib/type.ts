@@ -58,7 +58,7 @@ declare module WM {
     // 是否忽略某个元素
     ignoreNode?: (node: ChildNode) => boolean
     // 标记的数据添加前的回调
-    add?: (e: Event, data: MarkData) => Promise<string | undefined>
+    add?: (data?: MarkData, range?: Range) => void
     // 自定义标记的样式
     mark?: (ctx: CanvasRenderingContext2D, range: Range) => void
     // 高亮标记的样式
@@ -78,7 +78,7 @@ declare module WM {
     message: string
   }
 
-  export type WordMarkOptions = RequiredBy<MarkOptions, 'scrollBy' | 'color' | 'globalAlpha' | 'attribute'>
+  export type WordMarkOptions = RequiredBy<MarkOptions, 'scrollBy' | 'color' | 'globalAlpha' | 'attribute' | 'data'>
 }
 
 export default WM

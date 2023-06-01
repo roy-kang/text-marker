@@ -3,85 +3,13 @@ import {
   createCanvas,
   init,
   initHandler,
-  getUUID,
   render,
-  getParentInfo,
-  getParentText,
   deleteMark,
-  getAttribute,
   refreshMark,
   throttle,
-  getCanvasTranslateY
+  getCanvasTranslateY,
+  getMarkData
 } from './utils'
-
-/**
- * 鼠标up事件，用于获取选中的文本
- * @param _e 
- * @param data 
- * @param messages 
- * @param ctx 
- * @param parentEle 
- * @param options 
- * @returns 
- */
-const mouseupHandler = (
-  e: MouseEvent,
-  data: WM.MarkData[] = [],
-  messages: WM.Message[],
-  ctx: CanvasRenderingContext2D,
-  parentEle: HTMLElement,
-  options: WM.WordMarkOptions
-) => {
-  const selection = window.getSelection()
-  let isSelection = false
-  if (selection?.toString()) {
-    isSelection = true
-    const range = selection.getRangeAt(0)
-
-    const startEle = range.startContainer as Text
-    const endEle = range.endContainer as Text
-
-    const [startBrother, startIndex] = getParentInfo(startEle, parentEle)
-    const [endBrother, endIndex] = getParentInfo(endEle, parentEle)
-
-    const position: WM.MarkData = {
-      id: getUUID(10),
-      startEle,
-      startEleId: getAttribute(startEle.parentElement, options.attribute),
-      startOffset: range.startOffset,
-      startText: startEle.data,
-      startIndex,
-      startBrother,
-      startParentText: getParentText(startEle, parentEle),
-      endEle,
-      endEleId: getAttribute(endEle.parentElement, options.attribute),
-      endOffset: range.endOffset,
-      endText: endEle.data,
-      endIndex,
-      endBrother,
-      endParentText: getParentText(endEle, parentEle),
-      text: selection.toString(),
-      message: '',
-      single: startEle === endEle
-    }
-
-    data.push(position)
-
-    if (options.add) {
-      options.add(e, position).then((msg?: string) => {
-        if (msg) {
-          position.message = msg
-        }
-        selection?.removeAllRanges()
-        render(ctx, position, messages, parentEle, options)
-      })
-    } else {
-      selection?.removeAllRanges()
-      render(ctx, position, messages, parentEle, options)
-    }
-  }
-  return isSelection
-}
 
 const defaultOptions = {
   scrollBy: document,
@@ -120,9 +48,27 @@ export default function wordMarker(container: HTMLElement, opts: WM.MarkOptions)
 
   let highlightId: string | undefined = ''
   let isSelection = false
-  const mouseupEvent = (e: MouseEvent) => {
-    isSelection = mouseupHandler(e, markData, messages, ctx, container, options)
+  const mouseupEvent = () => {
+    const selection = window.getSelection()
+    if (selection?.toString()) {
+      isSelection = true
+      const parentRect = container.getBoundingClientRect()
+      const range = selection.getRangeAt(0)
+      const rect = range.getBoundingClientRect()
+  
+      const markData = getMarkData(container, selection, options)
+  
+      options.add?.(markData, {
+        x: rect.x - parentRect.x,
+        y: rect.y - parentRect.y,
+        width: rect.width,
+        height: rect.height,
+      })
+    } else {
+      options.add?.()
+    }
   }
+
   const scrollEvent = throttle(() => {
     const parentRect = container.getBoundingClientRect()
     let y = 0
@@ -137,7 +83,9 @@ export default function wordMarker(container: HTMLElement, opts: WM.MarkOptions)
     refreshMark(ctx, messages, options)
   })
 
-  container.addEventListener('mouseup', mouseupEvent)
+  if (options.add) {
+    container.addEventListener('mouseup', mouseupEvent)
+  }
   if (lazyLoad) {
     options.scrollBy.addEventListener('scroll', scrollEvent)
   }
@@ -154,6 +102,14 @@ export default function wordMarker(container: HTMLElement, opts: WM.MarkOptions)
         }
         return key
       }))
+    },
+    /**
+     * 添加标记
+     * @param message 
+     */
+    addMark(data: WM.MarkData) {
+      markData.push(data)
+      render(ctx, data, messages, container, options)
     },
     /**
      * 修改标记备注
@@ -200,7 +156,7 @@ export default function wordMarker(container: HTMLElement, opts: WM.MarkOptions)
      * @param y 
      * @returns 
      */
-    checkMark(x: number, y: number) {
+    checkMark(x: number, y: number): WM.MarkData | undefined {
       if (isSelection) {
         isSelection = false
         return
@@ -254,7 +210,9 @@ export default function wordMarker(container: HTMLElement, opts: WM.MarkOptions)
      * 销毁所有事件
      */
     destory() {
-      container.removeEventListener('mouseup', mouseupEvent)
+      if (options.add) {
+        container.removeEventListener('mouseup', mouseupEvent)
+      }
       if (lazyLoad) {
         options.scrollBy.removeEventListener('scroll', scrollEvent)
       }
