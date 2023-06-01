@@ -88,6 +88,7 @@ export default function wordMarker(container: HTMLElement, opts: WM.MarkOptions)
   }
   if (lazyLoad) {
     options.scrollBy.addEventListener('scroll', scrollEvent)
+    scrollEvent()
   }
 
   return {
