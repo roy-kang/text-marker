@@ -89,9 +89,9 @@ export const getParentText = (ele: Text, parentEle: HTMLElement) => {
  * @param parentEle 
  * @returns 
  */
-export const createCanvas = (parentEle: HTMLElement, lazyLoad: boolean) => {
+export const createCanvas = (parentEle: HTMLElement, lazyLoad: boolean, zIndex = 1) => {
   const div = document.createElement('div')
-  div.setAttribute('style', 'position: absolute; top: 0; left: 0; z-index: 999999; pointer-events: none;')
+  div.setAttribute('style', `position: absolute; top: 0; left: 0; z-index: ${zIndex}; pointer-events: none;`)
   const canvas = document.createElement('canvas')
   canvas.width = parentEle.scrollWidth
   canvas.height = lazyLoad ? window.innerHeight * 3 : parentEle.scrollHeight

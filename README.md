@@ -32,6 +32,8 @@ type MarkOptions = {
   color?: string;
   // 标记的透明度
   globalAlpha?: number;
+  // 层级
+  zIndex?: number;
   // 标记的数据
   data?: MarkData[];
   // 初始化时处理所有元素

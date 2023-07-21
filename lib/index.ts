@@ -28,7 +28,7 @@ export default function wordMarker(container: HTMLElement, opts: WM.MarkOptions)
     lazyLoad = false
   }
   const messages: WM.Message[] = []
-  const canvas = createCanvas(container, lazyLoad)
+  const canvas = createCanvas(container, lazyLoad, options.zIndex)
   const ctx = canvas.getContext('2d')!
   ctx.fillStyle = options.color
   ctx.globalAlpha = options.globalAlpha
