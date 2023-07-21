@@ -1,4 +1,4 @@
-import type WM from './type'
+import WM from './type'
 import {
   createCanvas,
   init,
@@ -79,6 +79,7 @@ export default function wordMarker(container: HTMLElement, opts: WM.MarkOptions)
     } else {
       y = -window.innerHeight - parentRect.y
     }
+    highlightId = ''
     canvas.style.transform = `translateY(${y}px)`
     refreshMark(ctx, messages, options)
   })
