@@ -136,7 +136,7 @@ export default function wordMarker(container: HTMLElement, opts: WM.MarkOptions)
     getPosition(id: string) {
       const msg = messages.find(d => d.id === id)
       if (msg) {
-        let x = 0, y = 0
+        let x = Infinity, y = Infinity
         for (const pos of msg.range) {
           x = Math.min(x, pos.x)
           y = Math.min(y, pos.y)
