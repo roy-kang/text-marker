@@ -209,6 +209,14 @@ export default function wordMarker(container: HTMLElement, opts: WM.MarkOptions)
       refreshMark(ctx, messages, options)
     },
     /**
+     * 清除所有标记
+     */
+    clear() {
+      markData = []
+      messages.length = 0
+      ctx.clearRect(0, 0, canvas.width, canvas.height)
+    },
+    /**
      * 销毁所有事件
      */
     destory() {
@@ -218,6 +226,8 @@ export default function wordMarker(container: HTMLElement, opts: WM.MarkOptions)
       if (lazyLoad) {
         options.scrollBy.removeEventListener('scroll', scrollEvent)
       }
+      this.clear()
+      canvas.parentElement?.remove()
     }
   }
 }

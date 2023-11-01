@@ -100,6 +100,10 @@ function wordMarker(
    */
   refresh(): void;
   /**
+   * 清除所有标记
+   */
+  clear(): void;
+  /**
    * 销毁所有事件
    */
   destory(): void;

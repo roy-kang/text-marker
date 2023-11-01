@@ -20,6 +20,9 @@ export const getUUID = (num: number) => {
   return str
 }
 
+// 判断是否是文本节点
+const isText = (val: any) => Object.prototype.toString.call(val) === '[object Text]'
+
 /**
  * 节流函数
  * @param fn 
@@ -374,6 +377,20 @@ export const getMarkData = (container: HTMLElement, selection: Selection, option
   return markData
 }
 
+// 获取所有子孙元素的文本节点
+const getChildrenAllText = (ele: HTMLElement) => {
+  const texts: Text[] = []
+  const children = Array.from(ele.childNodes)
+  children.forEach(item => {
+    if (item.nodeType === 1) {
+      texts.push(...getChildrenAllText(item as HTMLElement))
+    } else if (item.nodeType === 3) {
+      texts.push(item as Text)
+    }
+  })
+  return texts
+}
+
 /**
  * 对初始化的数据进行元素绑定
  * @param node 
@@ -383,7 +400,7 @@ const checkNode = (node: HTMLElement, data: WM.MarkData[], attribute: string) =>
   const text = node.textContent
   for (const item of data) {
     if (
-      !item.startEle &&
+      !isText(item.startEle) &&
       (item.startEleId
         ? item.startEleId === getAttribute(node, attribute)
         : (!item.startParentText || item.startParentText === text)
@@ -391,22 +408,24 @@ const checkNode = (node: HTMLElement, data: WM.MarkData[], attribute: string) =>
     ) {
       if (node.nodeType === 1) {
         const tags = Array.from(node?.children).map(n => n.localName).join(',')
-        const target = !item.startParentText ? node : (node?.children[item.startIndex] || node)
-        if (tags === item.startBrother) {
-          for (const childNode of Array.from(target.childNodes)) {
-            if (childNode.nodeType === 3 && (childNode as Text).data === item.startText) {
-              item.startEle = childNode as Text
-              if (item.single) {
-                item.endEle = item.startEle
-              }
-              break
+        if (tags !== item.startBrother) {
+          continue
+        }
+        const allText = getChildrenAllText(node)
+
+        for (const text of allText) {
+          if (text.data === item.startText) {
+            item.startEle = text
+            if (item.single) {
+              item.endEle = item.startEle
             }
+            break
           }
         }
       }
     }
     if (
-      !item.endEle && !item.single &&
+      !isText(item.endEle) && !item.single &&
       (item.endEleId
         ? item.endEleId === getAttribute(node, attribute)
         : (!item.endParentText || item.endParentText === text)
@@ -414,13 +433,15 @@ const checkNode = (node: HTMLElement, data: WM.MarkData[], attribute: string) =>
     ) {
       if (node.nodeType === 1) {
         const tags = Array.from(node?.children).map(n => n.localName).join(',')
-        const target = !item.endParentText ? node : (node?.children[item.endIndex] || node)
-        if (tags === item.endBrother) {
-          for (const childNode of Array.from(target.childNodes)) {
-            if (childNode.nodeType === 3 && (childNode as Text).data === item.endText) {
-              item.endEle = childNode as Text
-              break
-            }
+        if (tags !== item.endBrother) {
+          continue
+        }
+        const allText = getChildrenAllText(node)
+
+        for (const text of allText) {
+          if (text.data === item.endText) {
+            item.endEle = text
+            break
           }
         }
       }
