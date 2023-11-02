@@ -109,9 +109,14 @@ export default function wordMarker(container: HTMLElement, opts: WM.MarkOptions)
      * 添加标记
      * @param message 
      */
-    addMark(data: WM.MarkData) {
-      markData.push(data)
-      render(ctx, data, messages, container, options)
+    addMark(data: WM.MarkData | WM.MarkData[]) {
+      if (Array.isArray(data)) {
+        markData.push(...data)
+        init(canvas, markData, messages, container, options)
+      } else {
+        markData.push(data)
+        render(ctx, data, messages, container, options)
+      }
     },
     /**
      * 修改标记备注
@@ -149,8 +154,14 @@ export default function wordMarker(container: HTMLElement, opts: WM.MarkOptions)
      * 根据 ID 删除标记
      * @param id 
      */
-    deleteMark(id: string) {
-      deleteMark(ctx, markData, messages, id, options)
+    deleteMark(id: string | string[]) {
+      if (Array.isArray(id)) {
+        for (const i of id) {
+          deleteMark(ctx, markData, messages, i, options)
+        }
+      } else {
+        deleteMark(ctx, markData, messages, id, options)
+      }
     },
     /**
      * 根据 x y 获取该位置是否有标记

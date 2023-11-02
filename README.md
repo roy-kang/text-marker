@@ -65,7 +65,7 @@ function wordMarker(
    * 添加标记
    * @param message
    */
-  addMark(data: MarkData): void;
+  addMark(data: MarkData | MarkData[]): void;
   /**
    * 修改标记备注
    * @param id
@@ -82,7 +82,7 @@ function wordMarker(
    * 根据 ID 删除标记
    * @param id
    */
-  deleteMark(id: string): void;
+  deleteMark(id: string | string[]): void;
   /**
    * 根据 x y 获取该位置是否有标记
    * @param x
