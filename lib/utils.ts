@@ -21,7 +21,7 @@ export const getUUID = (num: number) => {
 }
 
 // 判断是否是文本节点
-const isText = (val: any) => Object.prototype.toString.call(val) === '[object Text]'
+export const isText = (val: any) => Object.prototype.toString.call(val) === '[object Text]'
 
 /**
  * 节流函数

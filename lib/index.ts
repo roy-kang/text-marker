@@ -8,7 +8,8 @@ import {
   refreshMark,
   throttle,
   getCanvasTranslateY,
-  getMarkData
+  getMarkData,
+  isText
 } from './utils'
 
 const defaultOptions = {
@@ -112,9 +113,17 @@ export default function wordMarker(container: HTMLElement, opts: WM.MarkOptions)
     addMark(data: WM.MarkData | WM.MarkData[]) {
       if (Array.isArray(data)) {
         markData.push(...data)
-        init(canvas, markData, messages, container, options)
+        for (const d of data) {
+          if (!isText(d.startEle) || !isText(d.endEle)) {
+            initHandler(container, markData, options)
+          }
+          render(ctx, d, messages, container, options)
+        }
       } else {
         markData.push(data)
+        if (!isText(data.startEle) || !isText(data.endEle)) {
+          initHandler(container, markData, options)
+        }
         render(ctx, data, messages, container, options)
       }
     },
