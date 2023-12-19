@@ -57,13 +57,18 @@ function wordMarker(
   options: MarkOptions
 ): {
   /**
+   * 获取所有的实际标记数据
+   * @returns 获取标记数据
+   */
+  getActualMarkData(): MarkData[];
+  /**
    * 获取所有的标记数据
    * @returns 获取标记数据
    */
   getMarkData(): MarkData[];
   /**
    * 添加标记
-   * @param message
+   * @param data
    */
   addMark(data: MarkData | MarkData[]): void;
   /**

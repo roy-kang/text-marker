@@ -94,6 +94,11 @@ export default function wordMarker(container: HTMLElement, opts: WM.MarkOptions)
   }
 
   return {
+    getActualMarkData(): WM.MarkData[] {
+      return markData.map(data => {
+        return { ...data }
+      })
+    },
     /**
      * 获取所有的标记数据
      * @returns 获取标记数据
@@ -108,7 +113,7 @@ export default function wordMarker(container: HTMLElement, opts: WM.MarkOptions)
     },
     /**
      * 添加标记
-     * @param message 
+     * @param data 
      */
     addMark(data: WM.MarkData | WM.MarkData[]) {
       if (Array.isArray(data)) {
