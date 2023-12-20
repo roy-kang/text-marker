@@ -9,7 +9,8 @@ import {
   throttle,
   getCanvasTranslateY,
   getMarkData,
-  isText
+  isText,
+  selectText
 } from './utils'
 
 const defaultOptions = {
@@ -94,6 +95,8 @@ export default function wordMarker(container: HTMLElement, opts: WM.MarkOptions)
   }
 
   return {
+    selectText,
+    triggerMarker: mouseupEvent,
     getActualMarkData(): WM.MarkData[] {
       return markData.map(data => {
         return { ...data }

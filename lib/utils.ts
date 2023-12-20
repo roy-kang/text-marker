@@ -340,6 +340,24 @@ export const getAttribute = (el?: HTMLElement | null, attribute?: string) => {
 }
 
 /**
+ * 自动标记数据
+ * @param startNode 
+ * @param start 
+ * @param endNode 
+ * @param end
+ */
+export function selectText(startNode: HTMLElement, start: number, endNode: HTMLElement, end: number) {
+  let range = document.createRange()
+  range.setStart(startNode, start)
+  range.setEnd(endNode, end)
+  let selection = window.getSelection()
+  if (selection) {
+    selection.removeAllRanges()
+    selection.addRange(range)
+  }
+}
+
+/**
  * 获取标记数据
  * @param container 
  * @param selection 
