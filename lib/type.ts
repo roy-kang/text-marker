@@ -80,7 +80,7 @@ declare module WM {
     message: string
   }
 
-  export type WordMarkOptions = RequiredBy<MarkOptions, 'scrollBy' | 'color' | 'globalAlpha' | 'attribute' | 'data'>
+  export type WordMarkOptions = RequiredBy<MarkOptions, 'scrollBy' | 'color' | 'globalAlpha' | 'data'>
 }
 
 export default WM

@@ -1,5 +1,7 @@
 import type WM from './type'
 
+const defaultAttribute = 'data-mark-id'
+
 /**
  * 获取随机字符串
  * @param num 
@@ -335,8 +337,30 @@ export const render = (
  * @param attribute 
  * @returns 
  */
-export const getAttribute = (el?: HTMLElement | null, attribute?: string) => {
-  return el?.getAttribute(attribute || 'id') || ''
+export const getAttribute = (el?: HTMLElement | null, attribute = defaultAttribute) => {
+  return el?.getAttribute(attribute) || ''
+}
+
+/**
+ * 判断是否存在某个属性元素
+ * @param attribute 
+ * @param val 
+ * @returns 
+ */
+const hasAttributeElement = (attribute = defaultAttribute, val: string) => {
+  return !!document.querySelector(`[${attribute}="${val}"]`)
+}
+
+/**
+ * 设置元素的属性值
+ * @param el 
+ * @param attribute 
+ * @returns 
+ */
+export const setAttribute = (el?: HTMLElement | null, attribute?: string, value?: string) => {
+  if (el && attribute) {
+    el?.setAttribute(attribute, value || '')
+  }
 }
 
 /**
@@ -346,14 +370,94 @@ export const getAttribute = (el?: HTMLElement | null, attribute?: string) => {
  * @param endNode 
  * @param end
  */
-export function selectText(startNode: HTMLElement, start: number, endNode: HTMLElement, end: number) {
+export function selectText(ele: HTMLElement, text: string) {
+  const anchorNode = getAnchorNode(ele, text)
+  if (!anchorNode) {
+    return
+  }
+  const { firstNode, endNode } = anchorNode
   let range = document.createRange()
-  range.setStart(startNode, start)
-  range.setEnd(endNode, end)
+  range.setStart(firstNode.node, firstNode.index)
+  range.setEnd(endNode.node, endNode.index)
   let selection = window.getSelection()
   if (selection) {
     selection.removeAllRanges()
     selection.addRange(range)
+  }
+}
+
+/**
+ * 获取第一个包含文本的父级元素
+ * @param ele 
+ * @param text 
+ * @returns 
+ */
+function getFirstParent(ele: HTMLElement, text: string): HTMLElement | undefined {
+  if (!ele.textContent?.includes(text)) {
+    return
+  }
+  for (const child of Array.from(ele.children)) {
+    let element = getFirstParent(child as HTMLElement, text)
+    if (element) {
+      return getFirstParent(element, text)
+    }
+  }
+  return ele
+}
+
+/**
+ * 获取锚点文本的节点和索引
+ * @param ele 
+ * @param index 
+ * @param curIndex 
+ * @returns 
+ */
+function getAnchorText(ele: HTMLElement, index: number, curIndex = 0): { index: number, node: ChildNode } | number {
+  for (const node of Array.from(ele.childNodes)) {
+    if (isText(node)) {
+      curIndex += node.textContent?.length || 0
+    } else {
+      const res = getAnchorText(node as HTMLElement, index, curIndex)
+      if (typeof res === 'number') {
+        curIndex = res
+      } else {
+        return res
+      }
+    }
+    if (curIndex >= index) {
+      return {
+        index: index - (curIndex - (node.textContent?.length || 0)),
+        node
+      }
+    }
+  }
+  return curIndex
+}
+
+/**
+ * 获取锚点元素
+ * @param ele 
+ * @param text 
+ * @returns 
+ */
+export function getAnchorNode(ele: HTMLElement, text: string) {
+  if (!text || !ele.textContent?.includes(text)) {
+    return
+  }
+  const firstParent = getFirstParent(ele, text)
+  if (!firstParent) {
+    return
+  }
+  const index = firstParent.textContent?.indexOf(text) || 0
+  const firstNode = getAnchorText(firstParent, index)
+  const endNode = getAnchorText(firstParent, index + text.length)
+
+  if (typeof firstNode === 'number' || typeof endNode === 'number') {
+    return
+  }
+  return {
+    firstNode,
+    endNode
   }
 }
 
@@ -371,18 +475,29 @@ export const getMarkData = (container: HTMLElement, selection: Selection, option
 
   const [startBrother, startIndex] = getParentInfo(startEle, container)
   const [endBrother, endIndex] = getParentInfo(endEle, container)
+  const id = getUUID(10)
+  let startEleId = '', endEleId = ''
+  if (options.attribute) {
+    startEleId = getAttribute(startEle.parentElement, options.attribute)
+    endEleId = getAttribute(endEle.parentElement, options.attribute)
+  } else {
+    startEleId = id
+    setAttribute(startEle.parentElement, defaultAttribute, id)
+    endEleId = id
+    setAttribute(endEle.parentElement, defaultAttribute, id)
+  }
 
   const markData = {
-    id: getUUID(10),
+    id,
     startEle,
-    startEleId: getAttribute(startEle.parentElement, options.attribute),
+    startEleId,
     startOffset: range.startOffset,
     startText: startEle.data,
     startIndex,
     startBrother,
     startParentText: getParentText(startEle, container),
     endEle,
-    endEleId: getAttribute(endEle.parentElement, options.attribute),
+    endEleId,
     endOffset: range.endOffset,
     endText: endEle.data,
     endIndex,
@@ -414,12 +529,12 @@ const getChildrenAllText = (ele: HTMLElement) => {
  * @param node 
  * @param data 
  */
-const checkNode = (node: HTMLElement, data: WM.MarkData[], attribute: string) => {
+const checkNode = (node: HTMLElement, data: WM.MarkData[], attribute?: string) => {
   const text = node.textContent
   for (const item of data) {
     if (
       !isText(item.startEle) &&
-      (item.startEleId
+      (item.startEleId && hasAttributeElement(attribute, item.startEleId)
         ? item.startEleId === getAttribute(node, attribute)
         : (!item.startParentText || item.startParentText === text)
       )
@@ -444,7 +559,7 @@ const checkNode = (node: HTMLElement, data: WM.MarkData[], attribute: string) =>
     }
     if (
       !isText(item.endEle) && !item.single &&
-      (item.endEleId
+      (item.endEleId && hasAttributeElement(attribute, item.endEleId)
         ? item.endEleId === getAttribute(node, attribute)
         : (!item.endParentText || item.endParentText === text)
       )

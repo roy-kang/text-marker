@@ -10,15 +10,15 @@ import {
   getCanvasTranslateY,
   getMarkData,
   isText,
-  selectText
+  selectText,
+  getAnchorNode
 } from './utils'
 
 const defaultOptions = {
   scrollBy: document,
   color: 'rgba(224, 108, 117)',
   globalAlpha: 0.3,
-  data: [],
-  attribute: 'id',
+  data: []
 }
 
 export default function wordMarker(container: HTMLElement, opts: WM.MarkOptions) {
@@ -59,7 +59,7 @@ export default function wordMarker(container: HTMLElement, opts: WM.MarkOptions)
       const rect = range.getBoundingClientRect()
   
       const markData = getMarkData(container, selection, options)
-  
+
       options.add?.(markData, {
         x: rect.x - parentRect.x,
         y: rect.y - parentRect.y,
@@ -96,6 +96,7 @@ export default function wordMarker(container: HTMLElement, opts: WM.MarkOptions)
 
   return {
     selectText,
+    getAnchorNode,
     triggerMarker: mouseupEvent,
     getActualMarkData(): WM.MarkData[] {
       return markData.map(data => {
