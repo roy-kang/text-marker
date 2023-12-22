@@ -1,6 +1,6 @@
 import type WM from './type'
 
-const defaultAttribute = 'data-mark-id'
+export const defaultAttribute = 'data-mark-id'
 
 /**
  * 获取随机字符串
@@ -270,7 +270,19 @@ export const deleteMark = (
 ) => {
   const dataIndex = data.findIndex(item => item.id === id)
   if (dataIndex > -1) {
-    data.splice(dataIndex, 1)
+    const dt = data.splice(dataIndex, 1)[0]
+    if (dt.startEle) {
+      const markId = getAttribute(dt.startEle.parentElement, options.attribute || defaultAttribute)
+      if (!data.find(v => v.startEleId === markId)) {
+        removeAttribute(dt.startEle.parentElement, defaultAttribute)
+      }
+    }
+    if (dt.endEle) {
+      const markId = getAttribute(dt.endEle.parentElement, options.attribute || defaultAttribute)
+      if (!data.find(v => v.endEleId === markId)) {
+        removeAttribute(dt.endEle.parentElement, defaultAttribute)
+      }
+    }
   }
   const msgIndex = messages.findIndex(item => item.id === id)
   if (msgIndex > -1) {
@@ -300,7 +312,11 @@ export const render = (
   allTextNode.forEach((item, index) => {
     const range = document.createRange()
     range.setStart(item, index === 0 ? data.startOffset : 0)
-    range.setEnd(item, index === allTextNode.length - 1 ? data.endOffset : item.data.length)
+    let offset = index === allTextNode.length - 1 ? data.endOffset : item.data.length
+    if (offset > item.length) {
+      offset = item.length
+    }
+    range.setEnd(item, offset)
 
     const parentRect = container.getBoundingClientRect()
     const clientRects = range.getClientRects()
@@ -337,8 +353,25 @@ export const render = (
  * @param attribute 
  * @returns 
  */
-export const getAttribute = (el?: HTMLElement | null, attribute = defaultAttribute) => {
-  return el?.getAttribute(attribute) || ''
+export const getAttribute = (el?: HTMLElement | null, attribute?: string) => {
+  if (!el || !attribute) {
+    return ''
+  }
+  return el.getAttribute?.(attribute) || ''
+}
+
+
+/**
+ * 删除元素的属性
+ * @param el 
+ * @param attribute 
+ * @returns 
+ */
+export const removeAttribute = (el?: HTMLElement | null, attribute?: string) => {
+  if (!el || !attribute) {
+    return
+  }
+  return el.removeAttribute(attribute)
 }
 
 /**
@@ -365,10 +398,8 @@ export const setAttribute = (el?: HTMLElement | null, attribute?: string, value?
 
 /**
  * 自动标记数据
- * @param startNode 
- * @param start 
- * @param endNode 
- * @param end
+ * @param ele 
+ * @param text 
  */
 export function selectText(ele: HTMLElement, text: string) {
   const anchorNode = getAnchorNode(ele, text)
@@ -481,10 +512,16 @@ export const getMarkData = (container: HTMLElement, selection: Selection, option
     startEleId = getAttribute(startEle.parentElement, options.attribute)
     endEleId = getAttribute(endEle.parentElement, options.attribute)
   } else {
-    startEleId = id
-    setAttribute(startEle.parentElement, defaultAttribute, id)
-    endEleId = id
-    setAttribute(endEle.parentElement, defaultAttribute, id)
+    startEleId = getAttribute(startEle.parentElement, defaultAttribute)
+    if (!startEleId) {
+      startEleId = id
+      setAttribute(startEle.parentElement, defaultAttribute, id)
+    }
+    endEleId = getAttribute(endEle.parentElement, defaultAttribute)
+    if (!endEleId) {
+      endEleId = id
+      setAttribute(endEle.parentElement, defaultAttribute, id)
+    }
   }
 
   const markData = {
@@ -590,13 +627,13 @@ const checkNode = (node: HTMLElement, data: WM.MarkData[], attribute?: string) =
  */
 export const initHandler = (container: HTMLElement, data: WM.MarkData[], options: WM.WordMarkOptions) => {
   const children = Array.from(container.childNodes) as HTMLElement[]
-  data.length && checkNode(container, data, options.attribute)
+  data.length && checkNode(container, data, options.attribute || defaultAttribute)
   while (children.length) {
     const child = children.shift()!
     child && options.tag?.(child)
 
     // 处理子元素
-    data.length && checkNode(child, data, options.attribute)
+    data.length && checkNode(child, data, options.attribute || defaultAttribute)
     for (let i = 0; i < child?.childNodes.length; i++) {
       children.push(child?.childNodes[i] as HTMLElement)
     }

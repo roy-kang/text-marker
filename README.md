@@ -57,6 +57,16 @@ function wordMarker(
   options: MarkOptions
 ): {
   /**
+   * 自动标记数据
+   * @param ele 
+   * @param text 
+   */
+  selectText(ele: HTMLElement, text: string): void;
+  /**
+   * 触发标记动作
+   */
+  triggerMarker(): void;
+  /**
    * 获取所有的实际标记数据
    * @returns 获取标记数据
    */

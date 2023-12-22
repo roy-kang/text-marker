@@ -11,7 +11,8 @@ import {
   getMarkData,
   isText,
   selectText,
-  getAnchorNode
+  defaultAttribute,
+  removeAttribute
 } from './utils'
 
 const defaultOptions = {
@@ -95,9 +96,11 @@ export default function wordMarker(container: HTMLElement, opts: WM.MarkOptions)
   }
 
   return {
+    // 自动选中文本
     selectText,
-    getAnchorNode,
+    // 触发标记动作
     triggerMarker: mouseupEvent,
+    // 获取完整的标记数据
     getActualMarkData(): WM.MarkData[] {
       return markData.map(data => {
         return { ...data }
@@ -244,6 +247,12 @@ export default function wordMarker(container: HTMLElement, opts: WM.MarkOptions)
       markData = []
       messages.length = 0
       ctx.clearRect(0, 0, canvas.width, canvas.height)
+      const allEle = document.querySelectorAll(`[${defaultAttribute}]`)
+      if (allEle.length) {
+        Array.from(allEle).forEach(ele => {
+          removeAttribute(ele as HTMLElement, defaultAttribute)
+        })
+      }
     },
     /**
      * 销毁所有事件

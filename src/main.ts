@@ -4,7 +4,7 @@ import { str } from './abc'
 document.querySelector<HTMLDivElement>('#app')!.innerHTML = str
 
 const tmarker = wordMarker(document.querySelector<HTMLDivElement>('#app')!, {
-  data: [],
+  data: JSON.parse(localStorage.getItem('markData') || '[]'),
   tag(node) {
     if (node.nodeType === 1) {
       const text = node?.innerText || ''
@@ -19,19 +19,23 @@ const tmarker = wordMarker(document.querySelector<HTMLDivElement>('#app')!, {
     // 处理下划线
     return /^_*$/.test(text)
   },
-  add() {
+  add(data: any) {
     return new Promise((resolve) => {
       if (getSelection()?.toString().trim()) {
-        const msg = prompt('请输入批注', '这里需要一个备注信息')
-        if (msg !== null) {
-          resolve(msg)
-        }
+        tmarker.addMark(data)
+        window.md.push(data)
+        localStorage.setItem('markData', JSON.stringify(tmarker.getMarkData()))
+        // const msg = prompt('请输入批注', '这里需要一个备注信息')
+        // if (msg !== null) {
+        //   resolve(msg)
+        // }
       }
     })
   }
 })
 
 window.wm = tmarker
+window.md = []
 
 let activeTable: HTMLElement | null = null, oldBackgroundColor = ''
 document.querySelector('#app')!.addEventListener('dblclick', (e: Event) => {
