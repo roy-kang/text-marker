@@ -59,20 +59,13 @@ export const getCanvasTranslateY = (canvas: HTMLCanvasElement) => {
  * @param parentEle 
  * @returns 
  */
-export const getParentInfo = (ele: Text, parentEle: HTMLElement): [string, number] => {
-  let eleIndex = 0, parent = ele.parentElement!
+export const getParentInfo = (ele: Text, parentEle: HTMLElement): string => {
+  let parent = ele.parentElement!
   if (parent?.parentElement && parent.parentElement !== parentEle) {
     parent = parent.parentElement
   }
 
-  const tagName = Array.from(parent.children).map((item, index) => {
-    if (item === ele.parentElement) {
-      eleIndex = index
-    }
-    return item.localName
-  }).join(',')
-
-  return [tagName, eleIndex]
+  return Array.from(parent.children).map((item) => item.localName).join(',')
 }
 
 /**
@@ -504,8 +497,10 @@ export const getMarkData = (container: HTMLElement, selection: Selection, option
   const startEle = range.startContainer as Text
   const endEle = range.endContainer as Text
 
-  const [startBrother, startIndex] = getParentInfo(startEle, container)
-  const [endBrother, endIndex] = getParentInfo(endEle, container)
+  if (!isText(startEle) || !isText(endEle)) {
+    return
+  }
+
   const id = getUUID(10)
   let startEleId = '', endEleId = ''
   if (options.attribute) {
@@ -530,15 +525,13 @@ export const getMarkData = (container: HTMLElement, selection: Selection, option
     startEleId,
     startOffset: range.startOffset,
     startText: startEle.data,
-    startIndex,
-    startBrother,
+    startBrother: getParentInfo(startEle, container),
     startParentText: getParentText(startEle, container),
     endEle,
     endEleId,
     endOffset: range.endOffset,
     endText: endEle.data,
-    endIndex,
-    endBrother,
+    endBrother: getParentInfo(endEle, container),
     endParentText: getParentText(endEle, container),
     text: selection.toString(),
     message: '',
@@ -567,22 +560,29 @@ const getChildrenAllText = (ele: HTMLElement) => {
  * @param data 
  */
 const checkNode = (node: HTMLElement, data: WM.MarkData[], attribute?: string) => {
+  if (node.nodeType !== 1) return
   const text = node.textContent
   for (const item of data) {
-    if (
-      !isText(item.startEle) &&
-      (item.startEleId && hasAttributeElement(attribute, item.startEleId)
-        ? item.startEleId === getAttribute(node, attribute)
-        : (!item.startParentText || item.startParentText === text)
-      )
-    ) {
-      if (node.nodeType === 1) {
+    if (!isText(item.startEle)) {
+      if (item.startEleId && hasAttributeElement(attribute, item.startEleId)) {
+        if (item.startEleId === getAttribute(node, attribute)) {
+          const allText = getChildrenAllText(node)
+          for (const text of allText) {
+            if (text.data === item.startText) {
+              item.startEle = text
+              if (item.single) {
+                item.endEle = item.startEle
+              }
+              break
+            }
+          }
+        }
+      } else if (!item.startParentText || item.startParentText === text) {
         const tags = Array.from(node?.children).map(n => n.localName).join(',')
         if (tags !== item.startBrother) {
           continue
         }
         const allText = getChildrenAllText(node)
-
         for (const text of allText) {
           if (text.data === item.startText) {
             item.startEle = text
@@ -594,20 +594,23 @@ const checkNode = (node: HTMLElement, data: WM.MarkData[], attribute?: string) =
         }
       }
     }
-    if (
-      !isText(item.endEle) && !item.single &&
-      (item.endEleId && hasAttributeElement(attribute, item.endEleId)
-        ? item.endEleId === getAttribute(node, attribute)
-        : (!item.endParentText || item.endParentText === text)
-      )
-    ) {
-      if (node.nodeType === 1) {
+    if (!item.single && !isText(item.endEle)) {
+      if (item.endEleId && hasAttributeElement(attribute, item.endEleId)) {
+        if (item.endEleId === getAttribute(node, attribute)) {
+          const allText = getChildrenAllText(node)
+          for (const text of allText) {
+            if (text.data === item.endText) {
+              item.endEle = text
+              break
+            }
+          }
+        }
+      } else if (!item.endParentText || item.endParentText === text) {
         const tags = Array.from(node?.children).map(n => n.localName).join(',')
         if (tags !== item.endBrother) {
           continue
         }
         const allText = getChildrenAllText(node)
-
         for (const text of allText) {
           if (text.data === item.endText) {
             item.endEle = text

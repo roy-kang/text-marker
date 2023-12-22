@@ -10,8 +10,6 @@ declare module WM {
     startOffset: number
     // 开始文本
     startText: string
-    // 开始文本父级元素索引
-    startIndex: number
     // 开始文本父级兄弟元素集合
     startBrother: string
     // 开始文本父级元素文本
@@ -24,8 +22,6 @@ declare module WM {
     endOffset: number
     // 结束文本
     endText: string
-    // 结束文本父级元素索引
-    endIndex: number
     // 结束文本父级兄弟元素集合
     endBrother: string
     // 结束文本父级元素文本

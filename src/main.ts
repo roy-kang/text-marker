@@ -21,10 +21,11 @@ const tmarker = wordMarker(document.querySelector<HTMLDivElement>('#app')!, {
   },
   add(data: any) {
     return new Promise((resolve) => {
-      if (getSelection()?.toString().trim()) {
+      if (data) {
         tmarker.addMark(data)
         window.md.push(data)
         localStorage.setItem('markData', JSON.stringify(tmarker.getMarkData()))
+        console.log(data)
         // const msg = prompt('请输入批注', '这里需要一个备注信息')
         // if (msg !== null) {
         //   resolve(msg)

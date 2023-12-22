@@ -61,12 +61,16 @@ export default function wordMarker(container: HTMLElement, opts: WM.MarkOptions)
   
       const markData = getMarkData(container, selection, options)
 
-      options.add?.(markData, {
-        x: rect.x - parentRect.x,
-        y: rect.y - parentRect.y,
-        width: rect.width,
-        height: rect.height,
-      })
+      if (!markData) {
+        options.add?.()
+      } else {
+        options.add?.(markData, {
+          x: rect.x - parentRect.x,
+          y: rect.y - parentRect.y,
+          width: rect.width,
+          height: rect.height,
+        })
+      }
     } else {
       options.add?.()
     }
@@ -167,7 +171,7 @@ export default function wordMarker(container: HTMLElement, opts: WM.MarkOptions)
           x = Math.min(x, pos.x)
           y = Math.min(y, pos.y)
         }
-        return { x, y }
+        return { x, y, range: msg.range }
       }
       return
     },
