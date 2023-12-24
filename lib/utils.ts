@@ -1,4 +1,4 @@
-import type WM from './type'
+import WM from './type'
 
 export const defaultAttribute = 'data-mark-id'
 
