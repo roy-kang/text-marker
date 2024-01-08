@@ -486,26 +486,20 @@ export function getAnchorNode(ele: HTMLElement, text: string) {
 }
 
 /**
- * 获取标记数据
- * @param container 
- * @param selection 
- * @param options 
+ * 处理标记数据的 attribute
+ * @param data 
+ * @param attribute 
  * @returns 
  */
-export const getMarkData = (container: HTMLElement, selection: Selection, options: WM.WordMarkOptions) => {
-  const range = selection.getRangeAt(0)
-  const startEle = range.startContainer as Text
-  const endEle = range.endContainer as Text
-
-  if (!isText(startEle) || !isText(endEle)) {
+export const handleAttribute = (data: WM.MarkData, attribute?: string) => {
+  const { id, startEle, endEle } = data
+  if (!startEle || !endEle || !isText(startEle) || !isText(endEle)) {
     return
   }
-
-  const id = getUUID(10)
   let startEleId = '', endEleId = ''
-  if (options.attribute) {
-    startEleId = getAttribute(startEle.parentElement, options.attribute)
-    endEleId = getAttribute(endEle.parentElement, options.attribute)
+  if (attribute) {
+    startEleId = getAttribute(startEle.parentElement, attribute)
+    endEleId = getAttribute(endEle.parentElement, attribute)
   } else {
     startEleId = getAttribute(startEle.parentElement, defaultAttribute)
     if (!startEleId) {
@@ -518,17 +512,34 @@ export const getMarkData = (container: HTMLElement, selection: Selection, option
       setAttribute(endEle.parentElement, defaultAttribute, id)
     }
   }
+  data.startEleId = startEleId
+  data.endEleId = endEleId
+}
+
+/**
+ * 获取标记数据
+ * @param container 
+ * @param selection 
+ * @param options 
+ * @returns 
+ */
+export const getMarkData = (container: HTMLElement, selection: Selection) => {
+  const range = selection.getRangeAt(0)
+  const startEle = range.startContainer as Text
+  const endEle = range.endContainer as Text
+
+  if (!isText(startEle) || !isText(endEle)) {
+    return
+  }
 
   const markData = {
-    id,
+    id: getUUID(10),
     startEle,
-    startEleId,
     startOffset: range.startOffset,
     startText: startEle.data,
     startBrother: getParentInfo(startEle, container),
     startParentText: getParentText(startEle, container),
     endEle,
-    endEleId,
     endOffset: range.endOffset,
     endText: endEle.data,
     endBrother: getParentInfo(endEle, container),
@@ -555,6 +566,25 @@ const getChildrenAllText = (ele: HTMLElement) => {
 }
 
 /**
+ * 初始化的时候，重新标记 defaultAttribute
+ * @param data 
+ * @param attribute 
+ */
+const rollbackAttribute = (data: WM.MarkData, attribute?: string) => {
+  const { startEle, startEleId, endEle, endEleId } = data
+  if (startEle && endEle && isText(startEle) && isText(endEle) && attribute === defaultAttribute) {
+    const sId = getAttribute(startEle.parentElement, defaultAttribute)
+    if (startEleId && !sId) {
+      setAttribute(startEle.parentElement, defaultAttribute, startEleId)
+    }
+    const eId = getAttribute(endEle.parentElement, defaultAttribute)
+    if (endEleId && !eId) {
+      setAttribute(endEle.parentElement, defaultAttribute, endEleId)
+    }
+  }
+}
+
+/**
  * 对初始化的数据进行元素绑定
  * @param node 
  * @param data 
@@ -572,6 +602,7 @@ const checkNode = (node: HTMLElement, data: WM.MarkData[], attribute?: string) =
               item.startEle = text
               if (item.single) {
                 item.endEle = item.startEle
+                rollbackAttribute(item, attribute)
               }
               break
             }
@@ -588,6 +619,7 @@ const checkNode = (node: HTMLElement, data: WM.MarkData[], attribute?: string) =
             item.startEle = text
             if (item.single) {
               item.endEle = item.startEle
+              rollbackAttribute(item, attribute)
             }
             break
           }
@@ -601,6 +633,7 @@ const checkNode = (node: HTMLElement, data: WM.MarkData[], attribute?: string) =
           for (const text of allText) {
             if (text.data === item.endText) {
               item.endEle = text
+              rollbackAttribute(item, attribute)
               break
             }
           }
@@ -614,6 +647,7 @@ const checkNode = (node: HTMLElement, data: WM.MarkData[], attribute?: string) =
         for (const text of allText) {
           if (text.data === item.endText) {
             item.endEle = text
+            rollbackAttribute(item, attribute)
             break
           }
         }

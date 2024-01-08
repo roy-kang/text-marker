@@ -12,7 +12,8 @@ import {
   isText,
   selectText,
   defaultAttribute,
-  removeAttribute
+  removeAttribute,
+  handleAttribute
 } from './utils'
 
 const defaultOptions = {
@@ -59,7 +60,7 @@ export default function wordMarker(container: HTMLElement, opts: WM.MarkOptions)
       const range = selection.getRangeAt(0)
       const rect = range.getBoundingClientRect()
   
-      const markData = getMarkData(container, selection, options)
+      const markData = getMarkData(container, selection)
 
       if (!markData) {
         options.add?.()
@@ -133,6 +134,7 @@ export default function wordMarker(container: HTMLElement, opts: WM.MarkOptions)
           if (!isText(d.startEle) || !isText(d.endEle)) {
             initHandler(container, markData, options)
           }
+          handleAttribute(d, options.attribute)
           render(ctx, d, messages, container, options)
         }
       } else {
@@ -140,6 +142,7 @@ export default function wordMarker(container: HTMLElement, opts: WM.MarkOptions)
         if (!isText(data.startEle) || !isText(data.endEle)) {
           initHandler(container, markData, options)
         }
+        handleAttribute(data, options.attribute)
         render(ctx, data, messages, container, options)
       }
     },
