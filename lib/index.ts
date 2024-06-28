@@ -1,4 +1,4 @@
-import WM from './type'
+import * as WM from './type'
 import {
   createCanvas,
   init,
@@ -22,6 +22,8 @@ const defaultOptions = {
   globalAlpha: 0.3,
   data: []
 }
+
+export { WM as WordMarker }
 
 export default function wordMarker(container: HTMLElement, opts: WM.MarkOptions) {
   const options = { ...defaultOptions, ...opts }

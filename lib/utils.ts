@@ -1,4 +1,4 @@
-import WM from './type'
+import * as WM from './type'
 
 export const defaultAttribute = 'data-mark-id'
 
@@ -448,7 +448,7 @@ function getAnchorText(ele: HTMLElement, index: number, curIndex = 0): { index: 
         return res
       }
     }
-    if (curIndex >= index) {
+    if (curIndex >= index && isText(node)) {
       return {
         index: index - (curIndex - (node.textContent?.length || 0)),
         node
@@ -527,7 +527,6 @@ export const getMarkData = (container: HTMLElement, selection: Selection) => {
   const range = selection.getRangeAt(0)
   const startEle = range.startContainer as Text
   const endEle = range.endContainer as Text
-
   if (!isText(startEle) || !isText(endEle)) {
     return
   }
