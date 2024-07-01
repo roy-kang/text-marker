@@ -284,6 +284,35 @@ export const deleteMark = (
   }
 }
 
+// 获取两个节点中的所有 range 数据
+export const getActualRects = (
+  ctx: CanvasRenderingContext2D,
+  container: HTMLElement,
+  range: Range,
+  callback?: (range: WM.Range) => void
+) => {
+  const parentRect = container.getBoundingClientRect()
+  const clientRects = range.getClientRects()
+  const rangeList: WM.Range[] = []
+
+  for (let i = 0; i < clientRects.length; i++) {
+    const rect = clientRects[i]
+    const x = rect.left - parentRect.left
+    const y = rect.top - parentRect.top
+    const width = rect.right - rect.left
+    const height = rect.bottom - rect.top
+
+    if (width === 0 || height === 0) continue
+
+    const translateY = getCanvasTranslateY(ctx.canvas)
+    const ay = y - translateY
+
+    callback?.({ x, y: ay, width, height })
+    rangeList.push({ x, y, width, height })
+  }
+  return rangeList
+}
+
 /**
  * 高亮标记
  * @param ctx 
@@ -311,26 +340,15 @@ export const render = (
     }
     range.setEnd(item, offset)
 
-    const parentRect = container.getBoundingClientRect()
-    const clientRects = range.getClientRects()
-
-    for (let i = 0; i < clientRects.length; i++) {
-      const rect = clientRects[i]
-      const x = rect.left - parentRect.left
-      const y = rect.top - parentRect.top
-      const width = rect.right - rect.left
-      const height = rect.bottom - rect.top
-
-      const translateY = getCanvasTranslateY(ctx.canvas)
-      const ay = y - translateY
-
+    const rangeList = getActualRects(ctx, container, range, (rects: WM.Range) => {
+      const { x, y, width, height } = rects
       if (options.mark) {
-        options.mark(ctx, { x, y: ay, width, height })
+        options.mark(ctx, { x, y, width, height })
       } else {
-        ctx.fillRect(x, ay, width, height)
+        ctx.fillRect(x, y, width, height)
       }
-      rectInfo.push({ x, y, width, height })
-    }
+    })
+    rectInfo.push(...rangeList)
   })
 
   messages.push({

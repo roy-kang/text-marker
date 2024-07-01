@@ -13,7 +13,8 @@ import {
   selectText,
   defaultAttribute,
   removeAttribute,
-  handleAttribute
+  handleAttribute,
+  getActualRects
 } from './utils'
 
 const defaultOptions = {
@@ -58,24 +59,51 @@ export default function wordMarker(container: HTMLElement, opts: WM.MarkOptions)
     const selection = window.getSelection()
     if (selection?.toString()) {
       isSelection = true
-      const parentRect = container.getBoundingClientRect()
-      const range = selection.getRangeAt(0)
-      const rect = range.getBoundingClientRect()
   
       const markData = getMarkData(container, selection)
 
       if (!markData) {
-        options.add?.()
+        options.callback?.()
       } else {
-        options.add?.(markData, {
+        const parentRect = container.getBoundingClientRect()
+        const range = selection.getRangeAt(0)
+        const rect = range.getBoundingClientRect()
+
+        const rangeList = getActualRects(ctx, container, range)
+        options.callback?.(markData, {
           x: rect.x - parentRect.x,
           y: rect.y - parentRect.y,
           width: rect.width,
           height: rect.height,
+          range: rangeList
         })
       }
     } else {
-      options.add?.()
+      options.callback?.()
+    }
+  }
+
+  // 标签高亮
+  const highlightMark = (id?: string, force?: boolean) => {
+    if (highlightId !== id || force) {
+      if (id) {
+        const msg = messages.find(d => d.id === id)
+        const translateY = getCanvasTranslateY(canvas)
+        
+        if (msg) {
+          for (const pos of msg.range) {
+            const { x, y, width, height } = pos
+            let ay = y
+            if (y >= translateY && y <= translateY + window.innerHeight * 3) {
+              ay = y - translateY
+            }
+            options.highlight?.(ctx, { x, y: ay, width, height })
+          }
+        }
+      } else {
+        refreshMark(ctx, messages, options)
+      }
+      highlightId = id
     }
   }
 
@@ -89,12 +117,15 @@ export default function wordMarker(container: HTMLElement, opts: WM.MarkOptions)
     } else {
       y = -window.innerHeight - parentRect.y
     }
-    highlightId = ''
     canvas.style.transform = `translateY(${y}px)`
     refreshMark(ctx, messages, options)
+
+    if (highlightId) {
+      highlightMark(highlightId, true)
+    }
   })
 
-  if (options.add) {
+  if (options.callback) {
     container.addEventListener('mouseup', mouseupEvent)
   }
   if (lazyLoad) {
@@ -221,28 +252,7 @@ export default function wordMarker(container: HTMLElement, opts: WM.MarkOptions)
      * 高亮标记
      * @param id 
      */
-    lighthighMark(id?: string) {
-      if (highlightId !== id) {
-        if (id) {
-          const msg = messages.find(d => d.id === id)
-          const translateY = getCanvasTranslateY(canvas)
-          
-          if (msg) {
-            for (const pos of msg.range) {
-              const { x, y, width, height } = pos
-              let ay = y
-              if (y >= translateY && y <= translateY + window.innerHeight * 3) {
-                ay = y - translateY
-              }
-              options.highlight?.(ctx, { x, y: ay, width, height })
-            }
-          }
-        } else {
-          refreshMark(ctx, messages, options)
-        }
-        highlightId = id
-      }
-    },
+    highlightMark,
     /**
      * 重新刷新标记
      */
@@ -267,7 +277,7 @@ export default function wordMarker(container: HTMLElement, opts: WM.MarkOptions)
      * 销毁所有事件
      */
     destory() {
-      if (options.add) {
+      if (options.callback) {
         container.removeEventListener('mouseup', mouseupEvent)
       }
       if (lazyLoad) {
