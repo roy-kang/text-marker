@@ -40,8 +40,8 @@ type MarkOptions = {
   tag?: (node: HTMLElement) => void;
   // 是否忽略某个元素
   ignoreNode?: (node: ChildNode) => boolean;
-  // 标记的数据添加前的回调
-  add?: (data?: MarkData, range?: Range) => void;
+  // 划词回调
+  callback?: (data?: MarkData, range?: Range) => void;
   // 自定义标记的样式
   mark?: (ctx: CanvasRenderingContext2D, range: Range) => void;
   // 高亮标记的样式
@@ -58,8 +58,8 @@ function wordMarker(
 ): {
   /**
    * 自动标记数据
-   * @param ele 
-   * @param text 
+   * @param ele
+   * @param text
    */
   selectText(ele: HTMLElement, text: string): void;
   /**
@@ -109,7 +109,7 @@ function wordMarker(
    * 高亮标记
    * @param id
    */
-  lighthighMark(id?: string): void;
+  highlightMark(id?: string): void;
   /**
    * 重新刷新标记
    */
