@@ -680,6 +680,37 @@ const checkNode = (node: HTMLElement, data: WM.MarkData[], attribute?: string) =
  * @param options
  */
 export const initHandler = (container: HTMLElement, data: WM.MarkData[], options: WM.WordMarkOptions) => {
+  const attribute = options.attribute || defaultAttribute
+  let flag = false
+  // 先处理有 id 的数据
+  data.forEach(item => {
+    const startEle = container.querySelector(`[${attribute}="${item.startEleId}"]`)
+    const endEle = container.querySelector(`[${attribute}="${item.endEleId}"]`)
+    if (startEle) {
+      startEle.childNodes.forEach(node => {
+        if (isText(node) && node.textContent === item.startText) {
+          item.startEle = node as Text
+          if (item.single) {
+            item.endEle = node as Text
+          }
+        }
+      })
+    }
+    if (endEle && !item.endEle) {
+      endEle.childNodes.forEach(node => {
+        if (isText(node) && node.textContent === item.endText) {
+          item.endEle = node as Text
+        }
+      })
+    }
+    if (!item.startEle || !item.endEle) {
+      flag = true
+    }
+  })
+  if (!flag && !options.tag && !options.attribute) {
+    return
+  }
+
   const children = Array.from(container.childNodes) as HTMLElement[]
   data.length && checkNode(container, data, options.attribute || defaultAttribute)
   while (children.length) {
