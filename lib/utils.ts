@@ -510,7 +510,7 @@ export function getAnchorNode(ele: HTMLElement, text: string) {
  * @returns 
  */
 export const handleAttribute = (data: WM.MarkData, attribute?: string) => {
-  const { id, startEle, endEle } = data
+  const { startEle, endEle } = data
   if (!startEle || !endEle || !isText(startEle) || !isText(endEle)) {
     return
   }
@@ -521,13 +521,13 @@ export const handleAttribute = (data: WM.MarkData, attribute?: string) => {
   } else {
     startEleId = getAttribute(startEle.parentElement, defaultAttribute)
     if (!startEleId) {
-      startEleId = id
-      setAttribute(startEle.parentElement, defaultAttribute, id)
+      startEleId = getUUID(10)
+      setAttribute(startEle.parentElement, defaultAttribute, startEleId)
     }
     endEleId = getAttribute(endEle.parentElement, defaultAttribute)
     if (!endEleId) {
-      endEleId = id
-      setAttribute(endEle.parentElement, defaultAttribute, id)
+      endEleId = getUUID(10)
+      setAttribute(endEle.parentElement, defaultAttribute, endEleId)
     }
   }
   data.startEleId = startEleId
