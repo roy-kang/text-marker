@@ -454,22 +454,35 @@ function getFirstParent(ele: HTMLElement, text: string): HTMLElement | undefined
  * @param curIndex 
  * @returns 
  */
-function getAnchorText(ele: HTMLElement, index: number, curIndex = 0): { index: number, node: ChildNode } | number {
+function getAnchorText(
+  ele: HTMLElement,
+  index: number,
+  type: 'start' | 'end',
+  curIndex = 0
+): { index: number, node: ChildNode } | number {
   for (const node of Array.from(ele.childNodes)) {
     if (isText(node)) {
       curIndex += node.textContent?.length || 0
     } else {
-      const res = getAnchorText(node as HTMLElement, index, curIndex)
+      const res = getAnchorText(node as HTMLElement, index, type, curIndex)
       if (typeof res === 'number') {
         curIndex = res
       } else {
         return res
       }
     }
-    if (curIndex >= index && isText(node)) {
-      return {
-        index: index - (curIndex - (node.textContent?.length || 0)),
-        node
+    if (isText(node)) {
+      if (type === 'start' && curIndex > index) {
+        return {
+          index: index - (curIndex - (node.textContent?.length || 0)),
+          node
+        }
+      }
+      if (type === 'end' && curIndex >= index) {
+        return {
+          index: index - (curIndex - (node.textContent?.length || 0)),
+          node
+        }
       }
     }
   }
@@ -491,8 +504,8 @@ export function getAnchorNode(ele: HTMLElement, text: string) {
     return
   }
   const index = firstParent.textContent?.indexOf(text) || 0
-  const firstNode = getAnchorText(firstParent, index)
-  const endNode = getAnchorText(firstParent, index + text.length)
+  const firstNode = getAnchorText(firstParent, index, 'start')
+  const endNode = getAnchorText(firstParent, index + text.length, 'end')
 
   if (typeof firstNode === 'number' || typeof endNode === 'number') {
     return

@@ -1,6 +1,6 @@
 {
   "name": "word-marker",
-  "version": "1.1.14",
+  "version": "1.1.15",
   "description": "The library used to tag web page text, which can store tag information.",
   "type": "module",
   "files": [
