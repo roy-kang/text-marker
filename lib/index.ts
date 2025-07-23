@@ -86,6 +86,7 @@ export default function wordMarker(container: HTMLElement, opts: WM.MarkOptions)
   // 标签高亮
   const highlightMark = (id?: string, force?: boolean) => {
     if (highlightId !== id || force) {
+      refreshMark(ctx, messages, options)
       if (id) {
         const msg = messages.find(d => d.id === id)
         const translateY = getCanvasTranslateY(canvas)
@@ -100,8 +101,6 @@ export default function wordMarker(container: HTMLElement, opts: WM.MarkOptions)
             options.highlight?.(ctx, { x, y: ay, width, height })
           }
         }
-      } else {
-        refreshMark(ctx, messages, options)
       }
       highlightId = id
     }
@@ -132,6 +131,8 @@ export default function wordMarker(container: HTMLElement, opts: WM.MarkOptions)
     options.scrollBy.addEventListener('scroll', scrollEvent)
     scrollEvent()
   }
+
+  let currentCheckedId = ''
 
   return {
     // 自动选中文本
@@ -230,7 +231,7 @@ export default function wordMarker(container: HTMLElement, opts: WM.MarkOptions)
      * @param y 
      * @returns 
      */
-    checkMark(x: number, y: number): WM.MarkData | undefined {
+    checkMark(x: number, y: number) {
       if (isSelection) {
         isSelection = false
         return
@@ -238,12 +239,38 @@ export default function wordMarker(container: HTMLElement, opts: WM.MarkOptions)
       const parentRect = container.getBoundingClientRect()
       const vx = x - window.scrollX - parentRect.left
       const vy = y - window.scrollY - parentRect.top
+      const checkedMarks: WM.MarkData[] = []
+      let isInclude = false
       for (const msg of messages) {
         for (const pos of msg.range) {
           if (vx >= pos.x && vx <= pos.x + pos.width && vy >= pos.y && vy <= pos.y + pos.height) {
             const item = markData.find(d => d.id === msg.id)
-            return item ? { ...item } : undefined
+            if (item) {
+              checkedMarks.push(item)
+              if (!isInclude) {
+                isInclude = currentCheckedId === item.id
+              }
+            }
           }
+        }
+      }
+      if (!checkedMarks.length) {
+        currentCheckedId = ''
+        return
+      }
+      if (!isInclude) {
+        currentCheckedId = checkedMarks[0].id
+        return { ...checkedMarks[0] }
+      }
+      for (let i = 0; i < checkedMarks.length; i++) {
+        const item = checkedMarks[i]
+        if (item.id === currentCheckedId) {
+          if (i === checkedMarks.length - 1) {
+            currentCheckedId = checkedMarks[0].id
+            return { ...checkedMarks[0] }
+          }
+          currentCheckedId = checkedMarks[i + 1].id
+          return { ...checkedMarks[i + 1] }
         }
       }
       return
@@ -275,6 +302,19 @@ export default function wordMarker(container: HTMLElement, opts: WM.MarkOptions)
     },
     /**
      * 销毁所有事件
+     */
+    destroy() {
+      if (options.callback) {
+        container.removeEventListener('mouseup', mouseupEvent)
+      }
+      if (lazyLoad) {
+        options.scrollBy.removeEventListener('scroll', scrollEvent)
+      }
+      this.clear()
+      canvas.parentElement?.remove()
+    },
+    /**
+     * @deprecated 请使用 destroy 方法
      */
     destory() {
       if (options.callback) {
